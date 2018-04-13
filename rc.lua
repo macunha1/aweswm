@@ -1,13 +1,17 @@
 --[[
 
-     Awesome WM configuration template
-     github.com/lcpz
+    Awesome WM configuration
+
+    Created from the AWESOME work from github.com/lcpz
+    available at https://github.com/lcpz/awesome-copycats
 
 --]]
 
 -- {{{ Required libraries
-local awesome, client, mouse, screen, tag = awesome, client, mouse, screen, tag
-local ipairs, string, table, os, tostring, tonumber, type = ipairs, string, table, os, tostring, tonumber, type
+local awesome, client, tag = awesome, client, tag
+local mouse, screen, ipars = mouse, screen, ipars 
+local string, table, os    = string, table, os
+local tostring, type       = tostring, type
 
 local gears         = require("gears")
 local awful         = require("awful")
@@ -19,13 +23,13 @@ local lain          = require("lain")
 local freedesktop   = require("freedesktop")
 local hotkeys_popup = require("awful.hotkeys_popup").widget
                       require("awful.hotkeys_popup.keys")
+
 local config_path   = awful.util.getdir("config")
 local my_table      = awful.util.table or gears.table -- 4.{0,1} compatibility
+local dpi           = require("beautiful.xresources").apply_dpi
 -- }}}
 
 -- {{{ Error handling
--- Check if awesome encountered an error during startup and fell back to
--- another config (This code will only ever execute for the fallback config)
 if awesome.startup_errors then
     naughty.notify({ preset = naughty.config.presets.critical,
                      title = "Oops, there were errors during startup!",
@@ -45,34 +49,6 @@ do
         in_error = false
     end)
 end
--- }}}
-
--- {{{ Autostart windowless processes
-
--- INFO: ATM Systemd handles parts of the autostart
--- TODO: Migrate everything to Systemd init scripts
-
--- This function will run once every time Awesome is started
-local function run_once(cmd_arr)
-    awful.util.spawn(os.getenv("HOME") .. "/.bin/autostart")
-    for _, cmd in ipairs(cmd_arr) do
-        awful.util.spawn(string.format("pgrep -u $USER -fx '%s' > /dev/null || (%s)", cmd, cmd))
-    end
-end
-
---[[
-run_once({ "urxvtd", "unclutter -root" }) -- entries must be separated by commas
-
--- This function implements the XDG autostart specification
-
-awful.spawn.with_shell(
-    'if (xrdb -query | grep --quiet "^awesome\\.started:\\s*true$"); then; exit; fi;' ..
-    'xrdb -merge <<< "awesome.started:true";' ..
-    -- list each of your autostart commands, followed by ; inside single quotes, followed by ..
-    'dex --environment Awesome --autostart --search-paths "$XDG_CONFIG_DIRS/autostart:$XDG_CONFIG_HOME/autostart"' -- https://github.com/jceb/dex
-)
---]]
-
 -- }}}
 
 -- {{{ Variable definitions
@@ -102,32 +78,14 @@ end
 awful.util.terminal = terminal
 awful.util.tagnames = { "fn", "main", "void", "args", "*" }
 awful.layout.layouts = {
+    -- Full list https://awesomewm.org/doc/api/libraries/awful.layout.html#Client_layouts
     awful.layout.suit.magnifier,
-    -- awful.layout.suit.floating,
     awful.layout.suit.tile,
     awful.layout.suit.spiral,
     awful.layout.suit.tile.left,
     awful.layout.suit.termfair,
     awful.layout.suit.fair
 }
--- {{ Available layouts
-    --awful.layout.suit.fair.horizontal,
-    --awful.layout.suit.spiral,
-    --awful.layout.suit.spiral.dwindle,
-    --awful.layout.suit.max,
-    --awful.layout.suit.max.fullscreen,
-    --awful.layout.suit.magnifier,
-    --awful.layout.suit.corner.nw,
-    --awful.layout.suit.corner.ne,
-    --awful.layout.suit.corner.sw,
-    --awful.layout.suit.corner.se,
-    --lain.layout.cascade,
-    --lain.layout.cascade.tile,
-    --lain.layout.centerwork,
-    --lain.layout.centerwork.horizontal,
-    --lain.layout.termfair,
-    --lain.layout.termfair.center,
--- }}
 
 awful.util.taglist_buttons = my_table.join(
     awful.button({ }, 1, function(t) t:view_only() end),
@@ -173,7 +131,7 @@ awful.util.tasklist_buttons = my_table.join(
                 instance:hide()
                 instance = nil
             else
-                instance = awful.menu.clients({theme = {width = 250}})
+                instance = awful.menu.clients({theme = {width = dpi(250)}})
             end
         end
     end),
@@ -185,9 +143,9 @@ lain.layout.termfair.nmaster           = 3
 lain.layout.termfair.ncol              = 1
 lain.layout.termfair.center.nmaster    = 3
 lain.layout.termfair.center.ncol       = 1
-lain.layout.cascade.tile.offset_x      = 2
-lain.layout.cascade.tile.offset_y      = 32
-lain.layout.cascade.tile.extra_padding = 5
+lain.layout.cascade.tile.offset_x      = dpi(2)
+lain.layout.cascade.tile.offset_y      = dpi(32)
+lain.layout.cascade.tile.extra_padding = dpi(5)
 lain.layout.cascade.tile.nmaster       = 5
 lain.layout.cascade.tile.ncol          = 2
 
@@ -203,7 +161,7 @@ local myawesomemenu = {
     { "quit", function() awesome.quit() end }
 }
 awful.util.mymainmenu = freedesktop.menu.build({
-    icon_size = beautiful.menu_height or 16,
+    icon_size = beautiful.menu_height or dpi(16),
     before = {
         { "Awesome", myawesomemenu, beautiful.awesome_icon },
         -- other triads can be put here
@@ -218,7 +176,8 @@ awful.util.mymainmenu = freedesktop.menu.build({
 
 -- {{{ Screen
 -- Re-set wallpaper when a screen's geometry changes (e.g. different resolution)
--- beautiful.wallpaper = config_path .. "/wallpaper/default.jpg"
+beautiful.wallpaper = config_path .. "/wallpapers/default.jpg"
+
 screen.connect_signal("property::geometry", function(s)
     -- Wallpaper
     if beautiful.wallpaper then
@@ -258,12 +217,9 @@ globalkeys = my_table.join(
               {description = "lock screen", group = "hotkeys"}),
 
     -- File manager
-    awful.key({ modkey,  }, "e", function () awful.util.spawn("pcmanfm") end,
+    awful.key({ modkey, }, "e", function () awful.util.spawn("pcmanfm") end,
               {description = "open file manager", group="hotkeys"}),
 
-    -- Hotkeys
-    awful.key({ modkey, "Shift" }, "h",      hotkeys_popup.show_help,
-              {description = "show help", group="awesome"}),
     -- Tag browsing
     awful.key({ modkey,           }, "Left",   awful.tag.viewprev,
               {description = "view previous", group = "tag"}),
@@ -333,17 +289,6 @@ globalkeys = my_table.join(
             end
         end,
         {description = "go back", group = "client"}),
-
-    -- Show/Hide Wibox
-    -- awful.key({ modkey }, "b", function ()
-    --         for s in screen do
-    --             s.mywibox.visible = not s.mywibox.visible
-    --             if s.mybottomwibox then
-    --                 s.mybottomwibox.visible = not s.mybottomwibox.visible
-    --             end
-    --         end
-    --     end,
-    --     {description = "toggle wibox", group = "awesome"}),
 
     -- On the fly useless gaps change
     awful.key({ altkey, "Control" }, "+", function () lain.util.useless_gaps_resize(1) end,
@@ -537,18 +482,6 @@ globalkeys = my_table.join(
     awful.key({ modkey }, "b", function () awful.spawn(browser) end,
               {description = "run browser", group = "launcher"}),
 
-    -- Default
-    --[[ Menubar
-    awful.key({ modkey }, "p", function() menubar.show() end,
-              {description = "show the menubar", group = "launcher"})
-    --]]
-    --[[ dmenu
-    awful.key({ modkey }, "x", function ()
-            os.execute(string.format("dmenu_run -i -fn 'Monospace' -nb '%s' -nf '%s' -sb '%s' -sf '%s'",
-            beautiful.bg_normal, beautiful.fg_normal, beautiful.bg_focus, beautiful.fg_focus))
-        end,
-        {description = "show dmenu", group = "launcher"})
-    --]]
     -- Prompt
     awful.key({ modkey }, "r",
               function ()
@@ -592,9 +525,7 @@ clientkeys = my_table.join(
         {description = "maximize", group = "client"})
 )
 
--- Bind all key numbers to tags.
--- Be careful: we use keycodes to make it works on any keyboard layout.
--- This should map on the top row of your keyboard, usually 1 to 9.
+-- Bind all key numbers to tags. From 1 to 9
 for i = 1, 9 do
     -- Hack to only show tags 1 and 9 in the shortcut window (mod+s)
     local descr_view, descr_toggle, descr_move, descr_toggle_focus
@@ -730,7 +661,7 @@ client.connect_signal("request::titlebars", function(c)
         end)
     )
 
-    awful.titlebar(c, {size = 16}) : setup {
+    awful.titlebar(c, {size = dpi(16)}) : setup {
         { -- Left
             awful.titlebar.widget.iconwidget(c),
             buttons = buttons,
