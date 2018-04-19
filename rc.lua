@@ -51,6 +51,21 @@ do
 end
 -- }}}
 
+-- {{{ Autostart
+local function run_once(cmd_arr)
+    for _, cmd in ipairs(cmd_arr) do
+        awful.spawn.with_shell(
+            string.format("pgrep -u $USER -fx '%s' > /dev/null || (%s)", cmd, cmd)
+        )
+    end
+end
+
+run_once({
+    'gtk-launch weatherdesk setxkbmap xautolock',
+    'gtk-launch redshift-gtk',
+}) 
+-- }}}
+
 -- {{{ Variable definitions
 local chosen_theme = os.getenv("AWESOMEWM_THEME") or "cyan-neon"
 local modkey       = "Mod4"
@@ -60,19 +75,19 @@ local editor       = os.getenv("EDITOR") or "vim"
 local gui_editor   = "nvim"
 local browser      = "chromium"
 local screenlock   =  function ()
-    awful.util.spawn(os.getenv("HOME") .. "/.bin/screenlock.sh")
+    awful.spawn.with_shell(os.getenv("HOME") .. "/.local/bin/screenlock.sh")
 end
 local spotify_play = function()
-    awful.util.spawn("sp play")
+    awful.spawn.with_shell("sp play")
 end
 local spotify_stop = function()
-    awful.util.spawn("sp stop")
+    awful.spawn.with_shell("sp stop")
 end
 local spotify_next = function()
-    awful.util.spawn("sp next")
+    awful.spawn.with_shell("sp next")
 end
 local spotify_prev = function()
-    awful.util.spawn("sp prev")
+    awful.spawn.with_shell("sp prev")
 end
 
 awful.util.terminal = terminal
@@ -149,7 +164,7 @@ lain.layout.cascade.tile.extra_padding = dpi(5)
 lain.layout.cascade.tile.nmaster       = 5
 lain.layout.cascade.tile.ncol          = 2
 
-beautiful.init(string.format("%s/.config/awesome/themes/%s/theme.lua", os.getenv("HOME"), chosen_theme))
+beautiful.init(string.format("%sthemes/%s/theme.lua", config_path, chosen_theme))
 -- }}}
 
 -- {{{ Menu
@@ -176,7 +191,7 @@ awful.util.mymainmenu = freedesktop.menu.build({
 
 -- {{{ Screen
 -- Re-set wallpaper when a screen's geometry changes (e.g. different resolution)
-beautiful.wallpaper = config_path .. "/wallpapers/default.jpg"
+beautiful.wallpaper = config_path .. "wallpapers/default.jpg"
 
 screen.connect_signal("property::geometry", function(s)
     -- Wallpaper
@@ -206,7 +221,7 @@ root.buttons(my_table.join(
 globalkeys = my_table.join(
     -- Take a screenshot
     -- https://github.com/lcpz/dots/blob/master/bin/screenshot
-    awful.key({}, "Print", function () awful.util.spawn("xfce4-screenshooter") end,
+    awful.key({}, "Print", function () awful.spawn("xfce4-screenshooter") end,
               {description = "take a screenshot", group = "hotkeys"}),
 
     awful.key({ altkey }, "p", function() os.execute("screenshot") end,
@@ -217,7 +232,7 @@ globalkeys = my_table.join(
               {description = "lock screen", group = "hotkeys"}),
 
     -- File manager
-    awful.key({ modkey, }, "e", function () awful.util.spawn("pcmanfm") end,
+    awful.key({ modkey, }, "e", function () awful.spawn("pcmanfm") end,
               {description = "open file manager", group="hotkeys"}),
 
     -- Tag browsing
@@ -363,18 +378,18 @@ globalkeys = my_table.join(
               {description = "-10%", group = "hotkeys"}),
 
     awful.key({ modkey, "Shift" }, "s",
-        function() awful.util.spawn("slack") end,
+        function() awful.spawn("slack") end,
         {description = "opens slack messaging application", group = "messaging"}),
 
     -- {{ Spotify Control
     awful.key({ modkey, "Shift" }, "m",
-        function () awful.util.spawn("spotify") end,
+        function () awful.spawn("spotify") end,
         {description = "open spotify client", group = "spotify"}),
 
     awful.key({}, "XF86AudioPrev", spotify_prev,
               {description = "go to previous song on spotify", group = "spotify"}),
 
-    awful.key({}, "XF86AudioNext", spotify_next
+    awful.key({}, "XF86AudioNext", spotify_next,
               {description = "go to next song on spotify", group = "spotify"}),
 
     awful.key({}, "XF86AudioPlay", spotify_play,
@@ -396,20 +411,20 @@ globalkeys = my_table.join(
     -- ALSA volume control
     awful.key({}, "XF86AudioRaiseVolume",
     function ()
-      awful.util.spawn("amixer sset Master 5%+")
+      awful.spawn("amixer sset Master 5%+")
     end),
 
     awful.key({}, "XF86AudioLowerVolume",
     function ()
-      awful.util.spawn("amixer sset Master 5%-")
+      awful.spawn("amixer sset Master 5%-")
     end),
 
     awful.key({}, "XF86AudioMute", function ()
-        awful.util.spawn("amixer sset Master toggle")
+        awful.spawn("amixer sset Master toggle")
     end),
 
     awful.key({}, "XF86AudioMicMute", function ()
-        awful.util.spawn("amixer sset Mic toggle")
+        awful.spawn("amixer sset Mic toggle")
     end),
 
 
@@ -472,10 +487,10 @@ globalkeys = my_table.join(
         {description = "mpc on/off", group = "widgets"}),
 
     -- Copy primary to clipboard (terminals to gtk)
-    awful.key({ modkey }, "c", function () awful.util.spawn("xsel | xsel -i -b") end,
+    awful.key({ modkey }, "c", function () awful.spawn("xsel | xsel -i -b") end,
               {description = "copy terminal to gtk", group = "hotkeys"}),
     -- Copy clipboard to primary (gtk to terminals)
-    awful.key({ modkey }, "v", function () awful.util.spawn("xsel -b | xsel") end,
+    awful.key({ modkey }, "v", function () awful.spawn("xsel -b | xsel") end,
               {description = "copy gtk to terminal", group = "hotkeys"}),
 
     -- User programs
@@ -485,7 +500,7 @@ globalkeys = my_table.join(
     -- Prompt
     awful.key({ modkey }, "r",
               function ()
-                  awful.util.spawn('rofi -show drun')
+                  awful.spawn('rofi -show drun')
               end,
               {description = "run prompt", group = "launcher"})
     --]]
