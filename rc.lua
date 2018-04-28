@@ -61,8 +61,10 @@ local function run_once(cmd_arr)
 end
 
 run_once({
-    'gtk-launch weatherdesk setxkbmap xautolock',
+    'gtk-launch setxkbmap xautolock',
+    'gtk-launch weatherdesk',
     'gtk-launch redshift-gtk',
+    -- 'gtk-launch xcompmgr',
 }) 
 -- }}}
 
@@ -676,7 +678,7 @@ client.connect_signal("request::titlebars", function(c)
         end)
     )
 
-    awful.titlebar(c, {size = dpi(16)}) : setup {
+    awful.titlebar(c, {size = theme.wibar_height}) : setup {
         { -- Left
             awful.titlebar.widget.iconwidget(c),
             buttons = buttons,

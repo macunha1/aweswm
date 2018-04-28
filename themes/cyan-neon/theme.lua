@@ -23,30 +23,47 @@ local client      = client
 local config_path = awful.util.getdir("config")
 local my_table    = awful.util.table or gears.table -- 4.{0,1} compatibility
 
+local colors_hex      = {}
+colors_hex.black      = "#232323"
+colors_hex.red        = "#F84672"
+colors_hex.blue       = "#00AAF9"
+colors_hex.magenta    = "#FC71FF"
+colors_hex.cyan       = "#00FCF8"
+colors_hex.lightgray  = "#949C94"
+colors_hex.darkgray   = "#666666"
+colors_hex.lightgreen = "#00FFBB"
+colors_hex.lightblue  = "#00FCF8"
+colors_hex.lightcyan  = "#4DEEDD"
+colors_hex.white      = "#FBF1C7"
+
 local theme                                     = {}
 theme.dir                                       = config_path .. "/themes/cyan-neon"
 theme.wallpaper                                 = nil
 theme.font                                      = "Profont 8"
-theme.fg_normal                                 = "#F9F5D7"
-theme.fg_focus                                  = "#01FAFF"
-theme.fg_urgent                                 = "#9CFDFF"
-theme.bg_normal                                 = "#3F3F3F"
-theme.bg_focus                                  = "#1E2320"
+theme.fg_normal                                 = colors_hex.white
+theme.fg_focus                                  = colors_hex.cyan
+theme.fg_urgent                                 = colors_hex.red
+theme.bg_normal                                 = colors_hex.black
+theme.bg_focus                                  = theme.bg_normal
 theme.bg_urgent                                 = theme.bg_normal
 theme.border_width                              = dpi(1)
-theme.border_focus                              = "#6F6F6F"
+theme.border_focus                              = colors_hex.lightgreen
 theme.border_normal                             = theme.bg_normal -- change for a border highlight
 
-theme.taglist_fg_focus                          = "#FFFFFF"
-theme.taglist_bg_focus                          = "#111111"
-theme.taglist_bg_normal                         = "#111111"
-theme.titlebar_bg_normal                        = "#191919"
-theme.titlebar_bg_focus                         = "#262626"
-theme.menu_height                               = dpi(20)
-theme.menu_width                                = dpi(130)
+theme.taglist_fg_focus                          = colors_hex.lightgreen
+theme.taglist_bg_focus                          = colors_hex.black
+theme.taglist_bg_normal                         = theme.taglist_bg_focus -- same
+
+theme.titlebar_bg_normal                        = theme.fg_urgent -- colors_hex.lightgreen
+theme.titlebar_bg_focus                         = theme.bg_focus
+
+theme.wibar_height                              = 18 -- not used dpi to avoid icon resize
+theme.wibar_border_width                        = dpi(2) -- useless_gap * 2 for visual alignment
+theme.wibar_border_color                        = theme.bg_normal .. "11" -- transparent alpha
+theme.wibar_position                            = "top"
 theme.tasklist_disable_icon                     = true
 -- {{ Wibox Widgets (progress bars)
-theme.widget_forced_height                      = dpi(2)
+theme.widget_forced_height                      = dpi(4)
 theme.widget_forced_width                       = dpi(59)
 theme.widget_paddings                           = 2
 theme.widget_ticks                              = true -- separators between the progress bar
@@ -84,7 +101,7 @@ theme.layout_fullscreen                         = theme.dir .. "/icons/fullscree
 theme.layout_magnifier                          = theme.dir .. "/icons/magnifier.png"
 theme.layout_floating                           = theme.dir .. "/icons/floating.png"
 -- }}
-theme.useless_gap                               = 2
+theme.useless_gap                               = dpi(2)
 theme.titlebar_close_button_focus               = theme.dir .. "/icons/titlebar/close_focus.png"
 theme.titlebar_close_button_normal              = theme.dir .. "/icons/titlebar/close_normal.png"
 theme.titlebar_ontop_button_focus_active        = theme.dir .. "/icons/titlebar/ontop_focus_active.png"
@@ -110,13 +127,11 @@ theme.layout_termfair                           = theme.dir .. "/icons/termfair.
 theme.layout_centerwork                         = theme.dir .. "/icons/centerwork.png"
 
 local markup = lain.util.markup
-local blue   = theme.fg_focus
-local red    = "#EB8F8F"
 
 -- Textclock
 os.setlocale(os.getenv("LANG")) -- to localize the clock
 local mytextclock = wibox.widget.textclock(
-    "<b><span font='Misc Tamsyn'>%H:%M  |  %A  | %d/%m/%Y</span></b>",
+    markup.font(theme.font .. " bold", "%H:%M  |  %A  | %d/%m/%Y"),
     1
 )
 mytextclock.font = theme.font
@@ -199,11 +214,21 @@ theme.mpd = lain.widget.mpd({
     settings = function()
         if mpd_now.state == "play" then
             title = mpd_now.title
-            artist  = " " .. mpd_now.artist  .. markup(theme.fg_normal, " <span font='Misc Tamsyn 2'> </span>|<span font='Misc Tamsyn 5'> </span>")
+            artist  = " " .. mpd_now.artist .. markup(
+                theme.fg_normal,
+                string.format(
+                    " <span font='%s'> </span>|<span font='%s'> </span>",
+                    theme.font .. " 2",
+                    theme.font .. " 5"
+                )
+            )
             mpdicon:set_image(theme.play)
         elseif mpd_now.state == "pause" then
             title = "mpd "
-            artist  = "paused" .. markup(theme.fg_normal, " |<span font='Misc Tamsyn 5'> </span>")
+            artist  = "paused" .. markup(
+                theme.fg_normal,
+                " |<span font='".. theme.font .. " 5'> </span>"
+            )
             mpdicon:set_image(theme.pause)
         else
             title  = ""
@@ -213,7 +238,7 @@ theme.mpd = lain.widget.mpd({
             mpdicon:emit_signal("widget::layout_changed")
         end
 
-        widget:set_markup(markup.font(theme.font, markup(blue, title) .. artist))
+        widget:set_markup(markup.font(theme.font, markup(colors_hex.blue, title) .. artist))
     end
 })
 
@@ -243,7 +268,7 @@ local batupd = lain.widget.bat({
             elseif bat_now.perc > 15 then
                 batbar:set_color(theme.fg_normal)
             else
-                batbar:set_color(red)
+                batbar:set_color(colors_hex.red)
             end
         else
             if bat_now.perc >= 98 then
@@ -255,7 +280,7 @@ local batupd = lain.widget.bat({
                 batbar:set_color(theme.fg_normal)
                 baticon:set_image(theme.bat_low)
             else
-                batbar:set_color(red)
+                batbar:set_color(colors_hex.red)
                 baticon:set_image(theme.bat_no)
             end
         end
@@ -263,7 +288,11 @@ local batupd = lain.widget.bat({
     end
 })
 
-local batbg = wibox.container.background(batbar, "#474747", gears.shape.rectangle)
+local batbg = wibox.container.background(
+    batbar,
+    theme.bg_normal,
+    gears.shape.rectangle
+)
 local batwidget = wibox.container.margin(batbg, 2, 7, 4, 4)
 
 -- Memory (RAM)
@@ -281,13 +310,19 @@ theme.memory = wibox.widget {
 
 local mem_upd = lain.widget.mem({
     settings = function()
-        theme.memory:set_color(mem_now.perc > 80 and theme.fg_focus
+        theme.memory:set_color(mem_now.perc > 80 and theme.fg_urgent
                                               or theme.fg_normal)
         theme.memory:set_value(mem_now.perc / 100)
     end
 })
-local rambg   = wibox.container.background(theme.memory, theme.fg_normal, gears.shape.rectangle)
+
+local rambg   = wibox.container.background(
+    theme.memory,
+    theme.fg_normal,
+    gears.shape.rectangle
+)
 local ram_wid = wibox.container.margin(rambg, 2, 7, 4, 4)
+
 mem_widget({
     fg_normal = theme.fg_normal,
     fg_color  = theme.fg_focus
@@ -308,12 +343,17 @@ local cpugraph = wibox.widget {
 
 local cpu_upd = lain.widget.cpu({
     settings = function()
-        cpugraph:set_color(cpu_now.usage > 80 and theme.fg_focus
+        cpugraph:set_color(cpu_now.usage > 80 and theme.fg_urgent
                                               or theme.fg_normal)
         cpugraph:set_value(cpu_now.usage / 100)
     end
 })
-local cpubg     = wibox.container.background(cpugraph, theme.fg_normal, gears.shape.rectangle)
+
+local cpubg     = wibox.container.background(
+    cpugraph,
+    theme.fg_normal,
+    gears.shape.rectangle
+)
 local cpuwidget = wibox.container.margin(cpubg, 2, 7, 4, 4)
 
 -- ALSA volume bar
@@ -340,7 +380,7 @@ theme.volume = lain.widget.alsabar {
 
     colors = {
         background   = theme.bg_normal,
-        mute         = red,
+        mute         = colors_hex.red,
         unmute       = theme.fg_normal
     }
 }
@@ -367,14 +407,18 @@ theme.volume.bar:buttons(my_table.join (
             theme.volume.update()
           end)
 ))
-local volumebg = wibox.container.background(theme.volume.bar, "#474747", gears.shape.rectangle)
+local volumebg = wibox.container.background(theme.volume.bar, theme.bg_normal, gears.shape.rectangle)
 local volumewidget = wibox.container.margin(volumebg, 2, 7, 4, 4)
 
 -- Separators
-local first     = wibox.widget.textbox(markup.font("Misc Tamsyn 3", " "))
+local first     = wibox.widget.textbox(markup.font(theme.font .. " 3", " "))
 local spr       = wibox.widget.textbox('  ')
-local small_spr = wibox.widget.textbox(markup.font("Misc Tamsyn 4", " "))
-local bar_spr   = wibox.widget.textbox(markup.font("Misc Tamsyn 3", " ") .. markup.fontfg(theme.font, theme.fg_normal, "|") .. markup.font("Misc Tamsyn 5", " "))
+local small_spr = wibox.widget.textbox(markup.font(theme.font .. " 4", " "))
+local bar_spr   = wibox.widget.textbox(
+    markup.font(theme.font .. " 3", " ") ..
+    markup.fontfg(theme.font, theme.fg_normal, "|") ..
+    markup.font(theme.font .. " 5", " ")
+)
 
 -- Eminent-like task filtering
 local orig_filter = awful.widget.taglist.filter.all
@@ -402,7 +446,8 @@ function theme.at_screen_connect(s)
 
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
-    -- Create an imagebox widget which will contains an icon indicating which layout we're using.
+
+    -- Create an imagebox widget containing an icon for layout indicating.
     -- We need one layoutbox per screen.
     s.mylayoutbox = awful.widget.layoutbox(s)
     s.mylayoutbox:buttons(
@@ -413,16 +458,27 @@ function theme.at_screen_connect(s)
     )
 
     -- Create a taglist widget
-    s.mytaglist = awful.widget.taglist(s, awful.widget.taglist.filter.all, awful.util.taglist_buttons)
+    s.mytaglist = awful.widget.taglist({
+        screen  = s,
+        filter  = awful.widget.taglist.filter.all,
+        buttons = awful.util.taglist_buttons,
+    })
 
     -- Create a tasklist widget
-    s.mytasklist = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, awful.util.tasklist_buttons)
+    s.mytasklist = awful.widget.tasklist({
+        screen  = s,
+        filter  = awful.widget.tasklist.filter.currenttags,
+        buttons = awful.util.tasklist_buttons,
+    })
 
     -- Create the wibox
     s.mywibox = awful.wibar({
-        position = "top",
-        screen = s,
-        height = theme.menu_height,
+        position     = theme.wibar_position,
+        screen       = s,
+        height       = theme.wibar_height,
+        border_width = theme.wibar_border_width,
+        border_color = theme.wibar_border_color,
+
         bg = theme.bg_normal,
         fg = theme.fg_normal
     })
@@ -430,6 +486,7 @@ function theme.at_screen_connect(s)
     -- Add widgets to the wibox
     s.mywibox:setup {
         layout = wibox.layout.align.horizontal,
+        expand = "none",
         { -- Left widgets
             layout = wibox.layout.fixed.horizontal,
             small_spr,
