@@ -39,7 +39,7 @@ colors_hex.white      = "#FBF1C7"
 local theme                                     = {}
 theme.dir                                       = config_path .. "/themes/cyan-neon"
 theme.wallpaper                                 = nil
-theme.font                                      = "Profont 8"
+theme.font                                      = "Source Code Pro 9"
 theme.fg_normal                                 = colors_hex.white
 theme.fg_focus                                  = colors_hex.cyan
 theme.fg_urgent                                 = colors_hex.red
@@ -84,6 +84,8 @@ theme.ac                                        = theme.dir .. "/icons/ac.png"
 theme.bat                                       = theme.dir .. "/icons/bat.png"
 theme.bat_low                                   = theme.dir .. "/icons/bat_low.png"
 theme.bat_no                                    = theme.dir .. "/icons/bat_no.png"
+theme.calendar                                  = theme.dir .. "/icons/calendar.png"
+theme.clock                                     = theme.dir .. "/icons/clock.png"
 theme.play                                      = theme.dir .. "/icons/play.png"
 theme.pause                                     = theme.dir .. "/icons/pause.png"
 theme.stop                                      = theme.dir .. "/icons/stop.png"
@@ -129,9 +131,10 @@ theme.layout_centerwork                         = theme.dir .. "/icons/centerwor
 local markup = lain.util.markup
 
 -- Textclock
+local clockicon  = wibox.widget.imagebox(theme.clock)
 os.setlocale(os.getenv("LANG")) -- to localize the clock
 local mytextclock = wibox.widget.textclock(
-    markup.font(theme.font .. " bold", "%H:%M  |  %A  | %d/%m/%Y"),
+    markup.font(theme.font, "%H:%M | %A | %d/%m/%Y"),
     1
 )
 mytextclock.font = theme.font
@@ -152,7 +155,8 @@ theme.spotify = wibox.widget {
     },
     {
         id = 'current_song',
-        widget = wibox.widget.textbox
+        widget = wibox.widget.textbox,
+        font = theme.font
     },
     layout = wibox.layout.align.horizontal,
     set_status = function(self, is_playing)
@@ -218,8 +222,8 @@ theme.mpd = lain.widget.mpd({
                 theme.fg_normal,
                 string.format(
                     " <span font='%s'> </span>|<span font='%s'> </span>",
-                    theme.font .. " 2",
-                    theme.font .. " 5"
+                    theme.font,
+                    theme.font
                 )
             )
             mpdicon:set_image(theme.play)
@@ -227,7 +231,7 @@ theme.mpd = lain.widget.mpd({
             title = "mpd "
             artist  = "paused" .. markup(
                 theme.fg_normal,
-                " |<span font='".. theme.font .. " 5'> </span>"
+                " |<span font='".. theme.font .. "'> </span>"
             )
             mpdicon:set_image(theme.pause)
         else
@@ -411,13 +415,9 @@ local volumebg = wibox.container.background(theme.volume.bar, theme.bg_normal, g
 local volumewidget = wibox.container.margin(volumebg, 2, 7, 4, 4)
 
 -- Separators
-local first     = wibox.widget.textbox(markup.font(theme.font .. " 3", " "))
-local spr       = wibox.widget.textbox('  ')
-local small_spr = wibox.widget.textbox(markup.font(theme.font .. " 4", " "))
-local bar_spr   = wibox.widget.textbox(
-    markup.font(theme.font .. " 3", " ") ..
-    markup.fontfg(theme.font, theme.fg_normal, "|") ..
-    markup.font(theme.font .. " 5", " ")
+local blank_space_separator = wibox.widget.textbox(markup.font(theme.font, " "))
+local bar_separator   = wibox.widget.textbox(
+    markup.fontfg(theme.font, theme.fg_normal, "|")
 )
 
 -- Eminent-like task filtering
@@ -464,12 +464,13 @@ function theme.at_screen_connect(s)
         buttons = awful.util.taglist_buttons,
     })
 
+    -- NOTE: Deactivated due to lack of use 
     -- Create a tasklist widget
-    s.mytasklist = awful.widget.tasklist({
-        screen  = s,
-        filter  = awful.widget.tasklist.filter.currenttags,
-        buttons = awful.util.tasklist_buttons,
-    })
+    -- s.mytasklist = awful.widget.tasklist({
+    --     screen  = s,
+    --     filter  = awful.widget.tasklist.filter.currenttags,
+    --     buttons = awful.util.tasklist_buttons,
+    -- })
 
     -- Create the wibox
     s.mywibox = awful.wibar({
@@ -489,41 +490,44 @@ function theme.at_screen_connect(s)
         expand = "none",
         { -- Left widgets
             layout = wibox.layout.fixed.horizontal,
-            small_spr,
+            blank_space_separator,
             s.mylayoutbox,
-            first,
-            bar_spr,
+            bar_separator,
             s.mytaglist,
-            first,
+            blank_space_separator,
             s.mypromptbox,
         },
-        s.mytasklist, -- Middle widget
+        -- s.mytasklist, -- Middle-left widget
+        { -- Middle-right widgets
+            layout = wibox.layout.fixed.horizontal,
+            -- Enable the battery widget (if you have a battery)
+            -- bar_separator,
+            -- baticon,
+            -- batwidget,
+            volicon,
+            volumewidget,
+            -- Spotify
+            bar_separator,
+            theme.spotify,
+            blank_space_separator,
+            -- Textclock
+            bar_separator,
+            blank_space_separator,
+            mytextclock,
+            blank_space_separator,
+            -- Memory
+            bar_separator,
+            memicon,
+            ram_wid,
+            -- CPU
+            bar_separator,
+            cpuicon,
+            cpuwidget,
+        },
         { -- Right widgets
             layout = wibox.layout.fixed.horizontal,
             wibox.widget.systray(),
-            small_spr,
-            mpdicon,
-            volicon,
-            volumewidget,
-            bar_spr,
-            theme.spotify,
-            spr,
-            bar_spr,
-            memicon,
-            ram_wid,
-            bar_spr,
-            cpuicon,
-            cpuwidget,
-            -- Enable the battery widget (if you have a battery)
-            -- bar_spr,
-            -- spr,
-            -- baticon,
-            -- batwidget,
-            bar_spr,
-            spr,
-            mytextclock,
-            spr,
-        },
+        }
     }
 end
 
