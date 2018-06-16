@@ -15,6 +15,7 @@ local dpi         = require("beautiful.xresources").apply_dpi
 -- Plugins (external)
 local calendar    = require("plugins.calendar")
 local mem_widget  = require("plugins.memory")
+local spotify     = require("plugins.spotify")
 
 local os = { execute = os.execute, getenv = os.getenv, setlocale = os.setlocale }
 
@@ -145,71 +146,14 @@ calendar({
     fdow        = 7, -- Sunday as the first day of week
 }):attach(mytextclock)
 
--- Spotify Widget
--- Built on top of https://github.com/streetturtle/awesome-wm-widgets/blob/master/spotify-widget/spotify.lua
-local GET_SPOTIFY_STATUS_CMD = 'sp status'
-theme.spotify = wibox.widget {
-    {
-        id = "icon",
-        widget = wibox.widget.imagebox,
+-- Spotify
+local spotify_widget = spotify({
+    icons  = {
+        play   = theme.play,
+        pause  = theme.pause
     },
-    {
-        id = 'current_song',
-        widget = wibox.widget.textbox,
-        font = theme.font
-    },
-    layout = wibox.layout.align.horizontal,
-    set_status = function(self, is_playing)
-        if (is_playing) then
-            self.icon.image = theme.play
-        else
-            self.icon.image = theme.pause
-        end
-    end,
-    set_text = function(self, path)
-        self.current_song.markup = path
-    end,
-}
-
-local update_widget_icon = function(widget, stdout, _, _, _)
-    stdout = string.gsub(stdout, "\n", "")
-    if (stdout == 'Playing') then
-        widget:set_status(true)
-    else
-        widget:set_status(false)
-    end
-end
-
-local update_widget_text = function(widget, stdout, _, _, _)
-    if string.find(stdout, 'Error: Spotify is not running.') ~= nil then
-        widget:set_text('')
-        widget:set_visible(false)
-    else
-        widget:set_text(stdout)
-        widget:set_visible(true)
-    end
-end
-
-watch(GET_SPOTIFY_STATUS_CMD, 1, update_widget_icon, theme.spotify)
-watch('sp current-oneline', 1, update_widget_text, theme.spotify)
-
---- Adds mouse controls to the widget:
---  - left click - play/pause
---  - scroll up - play next song
---  - scroll down - play previous song
-theme.spotify:connect_signal("button::press", function(_, _, _, button)
-    if (button == 1) then
-        awful.spawn("sp play", false)  -- left click
-    elseif (button == 4) then
-        awful.spawn("sp next", false)  -- scroll up
-    elseif (button == 5) then
-        awful.spawn("sp prev", false)  -- scroll down
-    end
-    
-    awful.spawn.easy_async(GET_SPOTIFY_STATUS_CMD, function(stdout, stderr, exitreason, exitcode)
-        update_widget_icon(theme.spotify, stdout, stderr, exitreason, exitcode)
-    end)
-end)
+    font       = theme.font
+}).widget
 
 -- MPD
 -- Honestly, I never used it
@@ -390,26 +334,27 @@ theme.volume = lain.widget.alsabar {
 }
 
 theme.volume.tooltip.wibox.fg = theme.fg_focus
-theme.volume.bar:buttons(my_table.join (
-          awful.button({}, 1, function()
-            awful.spawn(string.format("%s -e alsamixer", awful.util.terminal))
-          end),
-          awful.button({}, 2, function()
-            os.execute(string.format("%s set %s 100%%", theme.volume.cmd, theme.volume.channel))
-            theme.volume.update()
-          end),
-          awful.button({}, 3, function()
-            os.execute(string.format("%s set %s toggle", theme.volume.cmd, theme.volume.togglechannel or theme.volume.channel))
-            theme.volume.update()
-          end),
-          awful.button({}, 4, function()
-            os.execute(string.format("%s set %s 1%%+", theme.volume.cmd, theme.volume.channel))
-            theme.volume.update()
-          end),
-          awful.button({}, 5, function()
-            os.execute(string.format("%s set %s 1%%-", theme.volume.cmd, theme.volume.channel))
-            theme.volume.update()
-          end)
+theme.volume.bar:buttons(
+    my_table.join(
+        awful.button({}, 1, function()
+                awful.spawn(string.format("%s -e alsamixer", awful.util.terminal))
+        end),
+        awful.button({}, 2, function()
+                os.execute(string.format("%s set %s 100%%", theme.volume.cmd, theme.volume.channel))
+                theme.volume.update()
+        end),
+        awful.button({}, 3, function()
+                os.execute(string.format("%s set %s toggle", theme.volume.cmd, theme.volume.togglechannel or theme.volume.channel))
+                theme.volume.update()
+        end),
+        awful.button({}, 4, function()
+                os.execute(string.format("%s set %s 1%%+", theme.volume.cmd, theme.volume.channel))
+                theme.volume.update()
+        end),
+        awful.button({}, 5, function()
+                os.execute(string.format("%s set %s 1%%-", theme.volume.cmd, theme.volume.channel))
+                theme.volume.update()
+        end)
 ))
 local volumebg = wibox.container.background(theme.volume.bar, theme.bg_normal, gears.shape.rectangle)
 local volumewidget = wibox.container.margin(volumebg, 2, 7, 4, 4)
@@ -451,10 +396,12 @@ function theme.at_screen_connect(s)
     -- We need one layoutbox per screen.
     s.mylayoutbox = awful.widget.layoutbox(s)
     s.mylayoutbox:buttons(
-        my_table.join(awful.button({ }, 1, function () awful.layout.inc( 1) end),
-                      awful.button({ }, 3, function () awful.layout.inc(-1) end),
-                      awful.button({ }, 4, function () awful.layout.inc( 1) end),
-                      awful.button({ }, 5, function () awful.layout.inc(-1) end))
+        my_table.join(
+            awful.button({ }, 1, function () awful.layout.inc( 1) end),
+            awful.button({ }, 3, function () awful.layout.inc(-1) end),
+            awful.button({ }, 4, function () awful.layout.inc( 1) end),
+            awful.button({ }, 5, function () awful.layout.inc(-1) end)
+        )
     )
 
     -- Create a taglist widget
@@ -465,7 +412,7 @@ function theme.at_screen_connect(s)
     })
 
     -- NOTE: Deactivated due to lack of use 
-    -- Create a tasklist widget
+    -- Uncomment to have the tasklist widget back
     -- s.mytasklist = awful.widget.tasklist({
     --     screen  = s,
     --     filter  = awful.widget.tasklist.filter.currenttags,
@@ -497,6 +444,7 @@ function theme.at_screen_connect(s)
             blank_space_separator,
             s.mypromptbox,
         },
+        -- NOTE: Task list deacticated due to lack of usage
         -- s.mytasklist, -- Middle-left widget
         { -- Middle-right widgets
             layout = wibox.layout.fixed.horizontal,
@@ -508,7 +456,7 @@ function theme.at_screen_connect(s)
             volumewidget,
             -- Spotify
             bar_separator,
-            theme.spotify,
+            spotify_widget,
             blank_space_separator,
             -- Textclock
             bar_separator,

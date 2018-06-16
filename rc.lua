@@ -74,11 +74,13 @@ local modkey       = "Mod4"
 local altkey       = "Mod1"
 local terminal     = "alacritty"
 local editor       = os.getenv("EDITOR") or "vim"
-local gui_editor   = "nvim"
+local gui_editor   = "emacs"
 local browser      = "chromium"
+
 local screenlock   =  function ()
     awful.spawn.with_shell(os.getenv("HOME") .. "/.local/bin/screenlock.sh")
 end
+
 local spotify_play = function()
     awful.spawn.with_shell("sp play")
 end
@@ -350,16 +352,17 @@ globalkeys = my_table.join(
     awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(awful.layout.layouts, -1) end,
               {description = "select previous", group = "layout"}),
 
-    awful.key({ modkey, "Control" }, "n",
-              function ()
-                  local c = awful.client.restore()
-                  -- Focus restored client
-                  if c then
-                      client.focus = c
-                      c:raise()
-                  end
-              end,
-              {description = "restore minimized", group = "client"}),
+    -- Uncomment this line to enable minimize and maximize keybindings
+    -- awful.key({ modkey, "Control" }, "n",
+    --           function ()
+    --               local c = awful.client.restore()
+    --               -- Focus restored client
+    --               if c then
+    --                   client.focus = c
+    --                   c:raise()
+    --               end
+    --           end,
+    --           {description = "restore minimized", group = "client"}),
 
     -- Dropdown application
     awful.key({ modkey, }, "z", function () awful.screen.focused().quake:toggle() end,
@@ -526,20 +529,23 @@ clientkeys = my_table.join(
     awful.key({ modkey,           }, "o",      function (c) c:move_to_screen()               end,
               {description = "move to screen", group = "client"}),
     awful.key({ modkey,           }, "t",      function (c) c.ontop = not c.ontop            end,
-              {description = "toggle keep on top", group = "client"}),
-    awful.key({ modkey,           }, "n",
-        function (c)
-            -- The client currently has the input focus, so it cannot be
-            -- minimized, since minimized clients can't have the focus.
-            c.minimized = true
-        end ,
-        {description = "minimize", group = "client"}),
-    awful.key({ modkey,           }, "m",
-        function (c)
-            c.maximized = not c.maximized
-            c:raise()
-        end ,
-        {description = "maximize", group = "client"})
+              {description = "toggle keep on top", group = "client"})
+    -- Uncomment this line to enable minimize and maximize keybindings
+    -- ,
+    -- awful.key({ modkey,           }, "n",
+    --     function (c)
+    --         -- The client currently has the input focus, so it cannot be
+    --         -- minimized, since minimized clients can't have the focus.
+    --         c.minimized = true
+    --     end ,
+    --     {description = "minimize", group = "client"}),
+    -- Disable maximize
+    -- awful.key({ modkey,           }, "m",
+    --     function (c)
+    --         c.maximized = not c.maximized
+    --         c:raise()
+    --     end ,
+    --     {description = "maximize", group = "client"})
 )
 
 -- Bind all key numbers to tags. From 1 to 9
@@ -621,16 +627,17 @@ root.keys(globalkeys)
 awful.rules.rules = {
     -- All clients will match this rule.
     { rule = { },
-      properties = { border_width = beautiful.border_width,
-                     border_color = beautiful.border_normal,
-                     focus = awful.client.focus.filter,
-                     raise = true,
-                     keys = clientkeys,
-                     buttons = clientbuttons,
-                     screen = awful.screen.preferred,
-                     placement = awful.placement.no_overlap+awful.placement.no_offscreen,
-                     size_hints_honor = false
-     }
+      properties = {
+          border_width = beautiful.border_width,
+          border_color = beautiful.border_normal,
+          focus = awful.client.focus.filter,
+          raise = true,
+          keys = clientkeys,
+          buttons = clientbuttons,
+          screen = awful.screen.preferred,
+          placement = awful.placement.no_overlap+awful.placement.no_offscreen,
+          size_hints_honor = false
+      }
     },
 
     -- Titlebars
@@ -638,7 +645,7 @@ awful.rules.rules = {
       properties = { titlebars_enabled = false } },
 
     { rule = { class = "Gimp", role = "gimp-image-window" },
-          properties = { maximized = true } },
+      properties = { maximized = true } },
 }
 -- }}}
 
