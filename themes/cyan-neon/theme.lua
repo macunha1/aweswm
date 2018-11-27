@@ -5,19 +5,17 @@
 
 --]]
 
-local gears       = require("gears")
-local lain        = require("lain")
-local awful       = require("awful")
-local wibox       = require("wibox")
-local watch       = require("awful.widget.watch")
-local dpi         = require("beautiful.xresources").apply_dpi
+local gears = require("gears")
+local lain  = require("lain")
+local awful = require("awful")
+local wibox = require("wibox")
+local watch = require("awful.widget.watch")
+local dpi   = require("beautiful.xresources").apply_dpi
 
 -- Plugins (external)
-local calendar    = require("plugins.calendar")
-local mem_widget  = require("plugins.memory")
-local spotify     = require("plugins.spotify")
-
-local os = { execute = os.execute, getenv = os.getenv, setlocale = os.setlocale }
+local calendar        = require("plugins.calendar")
+local memory_piechart = require("plugins.memory")
+local spotify         = require("plugins.spotify")
 
 local awesome     = awesome
 local client      = client
@@ -133,7 +131,7 @@ local markup = lain.util.markup
 
 -- Textclock
 local clockicon  = wibox.widget.imagebox(theme.clock)
-os.setlocale(os.getenv("LANG")) -- to localize the clock
+-- os.setlocale(os.getenv("LANG")) -- to localize the clock
 local mytextclock = wibox.widget.textclock(
     markup.font(theme.font, "%H:%M | %A | %d/%m/%Y"),
     1
@@ -264,16 +262,26 @@ local mem_upd = lain.widget.mem({
     end
 })
 
-local rambg   = wibox.container.background(
+local rambg = wibox.container.background(
     theme.memory,
     theme.fg_normal,
     gears.shape.rectangle
 )
 local ram_wid = wibox.container.margin(rambg, 2, 7, 4, 4)
 
-mem_widget({
-    fg_normal = theme.fg_normal,
-    fg_color  = theme.fg_focus
+memory_piechart({
+    colors = {
+        theme.fg_focus,
+        theme.bg_normal,
+        theme.fg_normal,
+        colors_hex.lightgreen,
+    },
+    font  = theme.font,
+    fg    = theme.fg_normal,
+    bg    = theme.bg_focus,
+
+    border_width = theme.border_width,
+    border_color = theme.border_color
 }):attach(ram_wid)
 
 -- CPU
@@ -297,7 +305,7 @@ local cpu_upd = lain.widget.cpu({
     end
 })
 
-local cpubg     = wibox.container.background(
+local cpubg = wibox.container.background(
     cpugraph,
     theme.fg_normal,
     gears.shape.rectangle
@@ -337,23 +345,35 @@ theme.volume.tooltip.wibox.fg = theme.fg_focus
 theme.volume.bar:buttons(
     my_table.join(
         awful.button({}, 1, function()
-                awful.spawn(string.format("%s -e alsamixer", awful.util.terminal))
+            awful.spawn.easy_async(string.format("%s -e alsamixer", awful.util.terminal))
         end),
         awful.button({}, 2, function()
-                os.execute(string.format("%s set %s 100%%", theme.volume.cmd, theme.volume.channel))
-                theme.volume.update()
+            awful.spawn.easy_async(
+                string.format("%s set %s 100%%", theme.volume.cmd, theme.volume.channel)
+            )
+            theme.volume.update()
         end),
         awful.button({}, 3, function()
-                os.execute(string.format("%s set %s toggle", theme.volume.cmd, theme.volume.togglechannel or theme.volume.channel))
-                theme.volume.update()
+            awful.spawn.easy_async(
+                string.format(
+                    "%s set %s toggle",
+                    theme.volume.cmd,
+                    theme.volume.togglechannel or theme.volume.channel
+                )
+            )
+            theme.volume.update()
         end),
         awful.button({}, 4, function()
-                os.execute(string.format("%s set %s 1%%+", theme.volume.cmd, theme.volume.channel))
-                theme.volume.update()
+            awful.spawn.easy_async(
+                string.format("%s set %s 1%%+", theme.volume.cmd, theme.volume.channel)
+            )
+            theme.volume.update()
         end),
         awful.button({}, 5, function()
-                os.execute(string.format("%s set %s 1%%-", theme.volume.cmd, theme.volume.channel))
-                theme.volume.update()
+            awful.spawn.easy_async(
+                string.format("%s set %s 1%%-", theme.volume.cmd, theme.volume.channel)
+            )
+            theme.volume.update()
         end)
 ))
 local volumebg = wibox.container.background(theme.volume.bar, theme.bg_normal, gears.shape.rectangle)
