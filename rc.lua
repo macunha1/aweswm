@@ -62,37 +62,49 @@ end
 
 run_once({
     'gtk-launch setxkbmap xautolock',
-    'gtk-launch weatherdesk',
     'gtk-launch redshift-gtk',
-    -- 'gtk-launch xcompmgr',
-}) 
+})
 -- }}}
 
 -- {{{ Variable definitions
-local chosen_theme = os.getenv("AWESOMEWM_THEME") or "cyan-neon"
+local chosen_theme = "cyan-neon"
 local modkey       = "Mod4"
 local altkey       = "Mod1"
 local terminal     = "alacritty"
 local editor       = os.getenv("EDITOR") or "vim"
 local gui_editor   = "emacs"
 local browser      = "chromium"
+local media_player = "spotify"
 
 local screenlock   =  function ()
     awful.spawn.with_shell(os.getenv("HOME") .. "/.local/bin/screenlock.sh")
 end
 
-local spotify_play = function()
-    awful.spawn.with_shell("sp play")
+local playerctl = {
+    play = function() awful.spawn.with_shell("playerctl play-pause") end,
+    prev = function() awful.spawn.with_shell("playerctl previous") end,
+    next = function() awful.spawn.with_shell("playerctl next") end,
+    stop = function() awful.spawn.with_shell("playerctl stop") end,
+}
+
+local alsa_exec = function(args, channel)
+    awful.spawn.easy_async(
+        string.format(
+            "amixer -q set %s %s",
+            args.channel or beautiful.volume.togglechannel or beautiful.volume.channel,
+            args.command
+        ),
+        callback or beautiful.volume.update
+    )
 end
-local spotify_stop = function()
-    awful.spawn.with_shell("sp stop")
-end
-local spotify_next = function()
-    awful.spawn.with_shell("sp next")
-end
-local spotify_prev = function()
-    awful.spawn.with_shell("sp prev")
-end
+
+local alsa = {
+    volume_up      = function() alsa_exec({command="5%+"}) end,
+    volume_down    = function() alsa_exec({command="5%-"}) end,
+    mute_audio = function() alsa_exec({command="toggle"}) end,
+    mute_mic   = function() alsa_exec({channel="Mic", command="toggle"}) end,
+    mute_audio = function() alsa_exec({command="toggle"}) end,
+}
 
 awful.util.terminal = terminal
 awful.util.tagnames = { "fn", "main", "void", "args", "*" }
@@ -128,8 +140,6 @@ awful.util.tasklist_buttons = my_table.join(
         if c == client.focus then
             c.minimized = true
         else
-            --c:emit_signal("request::activate", "tasklist", {raise = true})<Paste>
-
             -- Without this, the following
             -- :isvisible() makes no sense
             c.minimized = false
@@ -228,7 +238,7 @@ globalkeys = my_table.join(
     awful.key({}, "Print", function () awful.spawn("xfce4-screenshooter") end,
               {description = "take a screenshot", group = "hotkeys"}),
 
-    awful.key({ altkey }, "p", function() os.execute("screenshot") end,
+    awful.key({ altkey }, "p", function() awful.spawn("screenshot") end,
               {description = "take a screenshot", group = "hotkeys"}),
 
     -- Screen locker
@@ -377,136 +387,66 @@ globalkeys = my_table.join(
               {description = "show weather", group = "widgets"}),
 
     -- Brightness
-    awful.key({ }, "XF86MonBrightnessUp", function () os.execute("xbacklight -inc 10") end,
+    awful.key({ }, "XF86MonBrightnessUp", function () awful.spawn.easy_async("xbacklight -inc 10") end,
               {description = "+10%", group = "hotkeys"}),
-    awful.key({ }, "XF86MonBrightnessDown", function () os.execute("xbacklight -dec 10") end,
+    awful.key({ }, "XF86MonBrightnessDown", function () awful.spawn.easy_async("xbacklight -dec 10") end,
               {description = "-10%", group = "hotkeys"}),
 
-    awful.key({ modkey, "Shift" }, "s",
-        function() awful.spawn("slack") end,
-        {description = "opens slack messaging application", group = "messaging"}),
-
-    -- {{ Spotify Control
+    -- {{ Media Player Control (uses playerctl)
     awful.key({ modkey, "Shift" }, "m",
-        function () awful.spawn("spotify") end,
-        {description = "open spotify client", group = "spotify"}),
+        function () awful.spawn.easy_async(media_player) end,
+        {description = "open default media player client", group = "player"}),
 
-    awful.key({}, "XF86AudioPrev", spotify_prev,
-              {description = "go to previous song on spotify", group = "spotify"}),
+    awful.key({}, "XF86AudioPrev", playerctl.prev,
+              {description = "go to previous song on player", group = "player"}),
 
-    awful.key({}, "XF86AudioNext", spotify_next,
-              {description = "go to next song on spotify", group = "spotify"}),
+    awful.key({}, "XF86AudioNext", playerctl.next,
+              {description = "go to next song on player", group = "player"}),
 
-    awful.key({}, "XF86AudioPlay", spotify_play,
-              {description = "play current song on spotify", group = "spotify"}),
+    awful.key({}, "XF86AudioPlay", playerctl.play,
+              {description = "play current song on player", group = "player"}),
 
-    awful.key({}, "XF86AudioStop", spotify_stop,
-              {description = "stop current song on spotify", group = "spotify"}),
+    awful.key({}, "XF86AudioStop", playerctl.stop,
+              {description = "stop current song on player", group = "player"}),
 
-    awful.key({ modkey , "Control"}, "s", spotify_play, -- same as XF86AudioPlay
-              {description = "play current song on spotify", group = "spotify"}),
+    awful.key({ modkey , "Control"}, "s", playerctl.play, -- same as XF86AudioPlay
+              {description = "play current song on player", group = "player"}),
 
-    awful.key({ modkey , "Control"}, "d", spotify_next, -- same as XF86AudioNext
-              {description = "go to next song on spotify", group = "spotify"}),
+    awful.key({ modkey , "Control"}, "d", playerctl.next, -- same as XF86AudioNext
+              {description = "go to next song on player", group = "player"}),
 
-    awful.key({ modkey , "Control"}, "a", spotify_prev, -- same as XF86AudioPrev
-              {description = "go to next song on spotify", group = "spotify"}),
-    -- Spotify Control }}
+    awful.key({ modkey , "Control"}, "a", playerctl.prev, -- same as XF86AudioPrev
+              {description = "go to previous song on player", group = "player"}),
+    -- Media Player Control }}
 
     -- ALSA volume control
-    awful.key({}, "XF86AudioRaiseVolume",
-    function ()
-      awful.spawn("amixer sset Master 5%+")
-    end),
+    awful.key({}, "XF86AudioRaiseVolume", alsa.volume_up),
+    awful.key({}, "XF86AudioLowerVolume", alsa.volume_down),
+    awful.key({}, "XF86AudioMute", alsa.mute_audio),
+    awful.key({}, "XF86AudioMicMute", alsa.mute_mic),
 
-    awful.key({}, "XF86AudioLowerVolume",
-    function ()
-      awful.spawn("amixer sset Master 5%-")
-    end),
+    awful.key({ altkey }, "m", alsa.mute_audio,
+              {description = "toggle audio mute", group = "hotkeys"}),
 
-    awful.key({}, "XF86AudioMute", function ()
-        awful.spawn("amixer sset Master toggle")
-    end),
+    awful.key({ altkey, "Control" }, "m", alsa.mute_audio,
+              {description = "toggle mic mute", group = "hotkeys"}),
 
-    awful.key({}, "XF86AudioMicMute", function ()
-        awful.spawn("amixer sset Mic toggle")
-    end),
+    awful.key({ altkey }, "0", alsa.volume_up,
+        {description = "volume +5%", group = "hotkeys"}),
 
+    awful.key({ altkey }, "9", alsa.volume_down,
+        {description = "volume -5%", group = "hotkeys"}),
 
-    awful.key({ altkey }, "m",
-        function ()
-            os.execute(string.format("amixer -q set %s toggle", beautiful.volume.togglechannel or beautiful.volume.channel))
-            beautiful.volume.update()
-        end,
-        {description = "toggle mute", group = "hotkeys"}),
-    awful.key({ altkey, "Control" }, "m",
-        function ()
-            os.execute(string.format("amixer -q set %s 100%%", beautiful.volume.channel))
-            beautiful.volume.update()
-        end,
-        {description = "volume 100%", group = "hotkeys"}),
-    awful.key({ altkey, "Control" }, "0",
-        function ()
-            os.execute(string.format("amixer -q set %s 0%%", beautiful.volume.channel))
-            beautiful.volume.update()
-        end,
-        {description = "volume 0%", group = "hotkeys"}),
-
-    -- MPD control
-    awful.key({ altkey, "Control" }, "Up",
-        function ()
-            os.execute("mpc toggle")
-            beautiful.mpd.update()
-        end,
-        {description = "mpc toggle", group = "widgets"}),
-    awful.key({ altkey, "Control" }, "Down",
-        function ()
-            os.execute("mpc stop")
-            beautiful.mpd.update()
-        end,
-        {description = "mpc stop", group = "widgets"}),
-    awful.key({ altkey, "Control" }, "Left",
-        function ()
-            os.execute("mpc prev")
-            beautiful.mpd.update()
-        end,
-        {description = "mpc prev", group = "widgets"}),
-    awful.key({ altkey, "Control" }, "Right",
-        function ()
-            os.execute("mpc next")
-            beautiful.mpd.update()
-        end,
-        {description = "mpc next", group = "widgets"}),
-    awful.key({ altkey }, "0",
-        function ()
-            local common = { text = "MPD widget ", position = "top_middle", timeout = 2 }
-            if beautiful.mpd.timer.started then
-                beautiful.mpd.timer:stop()
-                common.text = common.text .. lain.util.markup.bold("OFF")
-            else
-                beautiful.mpd.timer:start()
-                common.text = common.text .. lain.util.markup.bold("ON")
-            end
-            naughty.notify(common)
-        end,
-        {description = "mpc on/off", group = "widgets"}),
-
-    -- Copy primary to clipboard (terminals to gtk)
-    awful.key({ modkey }, "c", function () awful.spawn("xsel | xsel -i -b") end,
-              {description = "copy terminal to gtk", group = "hotkeys"}),
-    -- Copy clipboard to primary (gtk to terminals)
-    awful.key({ modkey }, "v", function () awful.spawn("xsel -b | xsel") end,
-              {description = "copy gtk to terminal", group = "hotkeys"}),
-
-    -- User programs
+    -- Browser
     awful.key({ modkey }, "b", function () awful.spawn(browser) end,
               {description = "run browser", group = "launcher"}),
 
+    -- Slack
+    awful.key({ modkey, "Shift" }, "s", function() awful.spawn("slack") end,
+              {description = "opens slack messaging application", group = "messaging"}),
+
     -- Prompt
-    awful.key({ modkey }, "r",
-              function ()
-                  awful.spawn('rofi -show drun')
-              end,
+    awful.key({ modkey }, "r", function () awful.spawn('rofi -show drun') end,
               {description = "run prompt", group = "launcher"})
     --]]
 )

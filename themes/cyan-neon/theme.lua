@@ -23,7 +23,7 @@ local config_path = awful.util.getdir("config")
 local my_table    = awful.util.table or gears.table -- 4.{0,1} compatibility
 
 local colors_hex      = {}
-colors_hex.black      = "#232323"
+colors_hex.black      = "#111111"
 colors_hex.red        = "#F84672"
 colors_hex.blue       = "#00AAF9"
 colors_hex.magenta    = "#FC71FF"
