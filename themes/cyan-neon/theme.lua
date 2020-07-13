@@ -46,21 +46,22 @@ theme.bg_normal                                 = colors_hex.black
 theme.bg_focus                                  = theme.bg_normal
 theme.bg_urgent                                 = theme.bg_normal
 theme.border_width                              = dpi(1)
-theme.border_focus                              = colors_hex.lightgreen
+theme.border_focus                              = colors_hex.cyan
 theme.border_normal                             = theme.bg_normal -- change for a border highlight
 
-theme.taglist_fg_focus                          = colors_hex.lightgreen
+theme.taglist_fg_focus                          = colors_hex.cyan
 theme.taglist_bg_focus                          = colors_hex.black
 theme.taglist_bg_normal                         = theme.taglist_bg_focus -- same
 
-theme.titlebar_bg_normal                        = theme.fg_urgent -- colors_hex.lightgreen
+theme.titlebar_bg_normal                        = theme.bg_normal
 theme.titlebar_bg_focus                         = theme.bg_focus
 
-theme.wibar_height                              = 18 -- not used dpi to avoid icon resize
+theme.wibar_height                              = 18 -- apply_dpi here blurs the icon
 theme.wibar_border_width                        = dpi(2) -- useless_gap * 2 for visual alignment
 theme.wibar_border_color                        = theme.bg_normal .. "11" -- transparent alpha
 theme.wibar_position                            = "top"
 theme.tasklist_disable_icon                     = true
+
 -- {{ Wibox Widgets (progress bars)
 theme.widget_forced_height                      = dpi(4)
 theme.widget_forced_width                       = dpi(59)
@@ -234,12 +235,16 @@ local batupd = lain.widget.bat({
     end
 })
 
+local wibox_container_layout = function(args)
+    return wibox.container.margin(args.bg, 2, 7, 4, 4)
+end
+
 local batbg = wibox.container.background(
     batbar,
     theme.bg_normal,
     gears.shape.rectangle
 )
-local batwidget = wibox.container.margin(batbg, 2, 7, 4, 4)
+local batwidget = wibox_container_layout({bg = batbg})
 
 -- Memory (RAM)
 local memicon  = wibox.widget.imagebox(theme.mem)
@@ -267,7 +272,7 @@ local rambg = wibox.container.background(
     theme.fg_normal,
     gears.shape.rectangle
 )
-local ram_wid = wibox.container.margin(rambg, 2, 7, 4, 4)
+local ram_wid = wibox_container_layout({bg = rambg})
 
 memory_piechart({
     colors = {
@@ -310,7 +315,7 @@ local cpubg = wibox.container.background(
     theme.fg_normal,
     gears.shape.rectangle
 )
-local cpuwidget = wibox.container.margin(cpubg, 2, 7, 4, 4)
+local cpuwidget = wibox_container_layout({bg = cpubg})
 
 -- ALSA volume bar
 local volicon = wibox.widget.imagebox(theme.vol)
@@ -376,13 +381,25 @@ theme.volume.bar:buttons(
             theme.volume.update()
         end)
 ))
-local volumebg = wibox.container.background(theme.volume.bar, theme.bg_normal, gears.shape.rectangle)
-local volumewidget = wibox.container.margin(volumebg, 2, 7, 4, 4)
+
+local volumebg = wibox.container.background(
+    theme.volume.bar,
+    theme.bg_normal,
+    gears.shape.rectangle
+)
+
+local volumewidget = wibox_container_layout({bg = volumebg})
 
 -- Separators
-local blank_space_separator = wibox.widget.textbox(markup.font(theme.font, " "))
-local bar_separator   = wibox.widget.textbox(
-    markup.fontfg(theme.font, theme.fg_normal, "|")
+local blank_space_separator = wibox.widget.textbox(
+    markup.font(theme.font, " ")
+)
+
+local bar_separator = wibox.widget.textbox(
+    markup.fontfg(
+        theme.font,
+        theme.fg_normal, "|"
+    )
 )
 
 -- Eminent-like task filtering
@@ -399,11 +416,12 @@ function theme.at_screen_connect(s)
     -- Quake application
     s.quake = lain.util.quake({ app = awful.util.terminal })
 
-    -- If wallpaper is a function, call it with the screen
     local wallpaper = theme.wallpaper
+    -- If wallpaper is a function, call it with the screen
     if type(wallpaper) == "function" then
         wallpaper = wallpaper(s)
     end
+
     gears.wallpaper.maximized(wallpaper, s, true)
 
     -- Tags
@@ -415,6 +433,7 @@ function theme.at_screen_connect(s)
     -- Create an imagebox widget containing an icon for layout indicating.
     -- We need one layoutbox per screen.
     s.mylayoutbox = awful.widget.layoutbox(s)
+
     s.mylayoutbox:buttons(
         my_table.join(
             awful.button({ }, 1, function () awful.layout.inc( 1) end),
@@ -464,7 +483,7 @@ function theme.at_screen_connect(s)
             blank_space_separator,
             s.mypromptbox,
         },
-        -- NOTE: Task list deacticated due to lack of usage
+        -- NOTE: Task list deactivated due to lack of usage
         -- s.mytasklist, -- Middle-left widget
         { -- Middle-right widgets
             layout = wibox.layout.fixed.horizontal,
