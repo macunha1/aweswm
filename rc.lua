@@ -75,7 +75,7 @@ end
 
 -- Usage example
 -- run_once({
---     dex -a -s /etc/xdg/autostart/:~/.config/autostart/
+--     'dex -a -s /etc/xdg/autostart/:~/.config/autostart/',
 --     'gtk-launch entryname',
 -- })
 -- }}}
@@ -87,7 +87,7 @@ local altkey       = "Mod1"
 local terminal     = "alacritty"
 local editor       = os.getenv("EDITOR") or "vim"
 local gui_editor   = "emacs"
-local browser      = "chromium"
+local browser      = os.getenv("BROWSER") or "chromium"
 local media_player = "spotify"
 
 local screenlock   =  function ()
@@ -236,7 +236,6 @@ awful.util.mymainmenu = freedesktop.menu.build({
         -- other triads can be put here
     }
 })
---menubar.utils.terminal = terminal -- Set the Menubar terminal for applications that require it
 -- }}}
 
 -- {{{ Screen
@@ -527,17 +526,17 @@ globalkeys = my_table.join(
         {description = "select previous", group = "layout"}
     ),
 
-    -- Uncomment this line to enable un-minimize all
-    -- awful.key({ modkey, "Control" }, "n",
-    --           function ()
-    --               local c = awful.client.restore()
-    --               -- Focus restored client
-    --               if c then
-    --                   client.focus = c
-    --                   c:raise()
-    --               end
-    --           end,
-    --           {description = "restore minimized", group = "client"}),
+    -- Un-minimize all
+    awful.key({ modkey, "Control" }, "n",
+              function ()
+                  local c = awful.client.restore()
+                  -- Focus restored client
+                  if c then
+                      client.focus = c
+                      c:raise()
+                  end
+              end,
+              {description = "restore minimized", group = "client"}),
 
     -- Dropdown application
     awful.key(

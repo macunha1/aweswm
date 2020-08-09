@@ -15,7 +15,7 @@ local dpi   = require("beautiful.xresources").apply_dpi
 -- Plugins (external)
 local calendar        = require("plugins.calendar")
 local memory_piechart = require("plugins.memory")
-local spotify         = require("plugins.spotify")
+-- local media_player    = require("plugins.spotify")
 
 local awesome     = awesome
 local client      = client
@@ -145,14 +145,15 @@ calendar({
     fdow        = 7, -- Sunday as the first day of week
 }):attach(mytextclock)
 
--- Spotify
-local spotify_widget = spotify({
-    icons  = {
-        play   = theme.play,
-        pause  = theme.pause
-    },
-    font       = theme.font
-}).widget
+-- Media Player
+-- local media_player_widget = media_player({
+--     icons  = {
+--         play   = theme.play,
+--         pause  = theme.pause
+--     },
+--     font       = theme.font,
+--     name       = "spotify"
+-- }).widget
 
 -- MPD
 -- Honestly, I never used it
@@ -493,10 +494,10 @@ function theme.at_screen_connect(s)
             -- batwidget,
             volicon,
             volumewidget,
-            -- Spotify
-            bar_separator,
-            spotify_widget,
-            blank_space_separator,
+            -- Media Player
+            -- bar_separator,
+            -- media_player_widget,
+            -- blank_space_separator,
             -- Textclock
             bar_separator,
             blank_space_separator,

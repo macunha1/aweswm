@@ -1,8 +1,9 @@
 #!/usr/bin/env lua
 
 local awful       = require("awful")
-local watch       = require("awful.widget.watch")
 local beautiful   = require("beautiful")
+local helpers     = require("lain.helpers")
+local proxy       = require("dbus_proxy")
 local wibox       = require("wibox")
 
 -- Spotify Widget
@@ -40,6 +41,13 @@ function Spotify:init(args)
 		end,
 	}
 
+    self.dbus = proxy.monitored.new({
+        bus       = proxy.Bus.SESSION,
+        name      = "org.mpris.MediaPlayer2." .. args.name or "spotify",
+        path      = "/org/mpris/MediaPlayer2",
+        interface = "org.mpris.MediaPlayer2.Player"
+    })
+
 	self:watch()
 	self:signal()
 
@@ -56,42 +64,72 @@ function Spotify:escape_xml(str)
 	return str
 end
 
-function Spotify:update_widget_icon(stdout)
-	stdout = string.gsub(stdout, "\n", "")
+function Spotify:update_widget_icon(output)
+	output = string.gsub(output, "\n", "")
 	self.widget:set_status(
-		(stdout == 'Playing') and self.icons.play or self.icons.pause
+		(output == 'Playing') and self.icons.play or self.icons.pause
 	)
 end
 
-function Spotify:update_widget_text(stdout)
-	if string.find(stdout, 'Error: Spotify is not running.') ~= nil then
-		self.widget:set_text('Spotify | Offline')
-		self.widget:set_visible(false)
-	else
-		self.widget:set_text(self:escape_xml(stdout))
-		self.widget:set_visible(true)
-	end
+function Spotify:update_widget_text(output)
+    self.widget:set_text(self:escape_xml(output))
+    self.widget:set_visible(true)
+end
+
+function Spotify:hide_widget()
+    self.widget:set_text('Media Player | Offline')
+    self.widget:set_visible(false)
+end
+
+function Spotify:info()
+  if not self.dbus.is_connected then
+    return {}
+  end
+
+  local metadata = self.dbus:Get("Metadata")
+  local status   = self.dbus:Get("PlaybackStatus")
+
+  local artists = metadata["xesam:artist"]
+  if type(artists) == "table" then
+    artists = table.concat(artists, ", ")
+  end
+
+  local info = {
+    album = metadata["xesam:album"],
+    title = metadata["xesam:title"],
+	artists = artists,
+	status = status
+  }
+
+  return info
 end
 
 function Spotify:watch()
-	local update_widget_icon = function(_, stdout, _, _, _)
-		self:update_widget_icon(stdout)
+	local update_widget = function()
+		local info = self:info()
+        if not info["status"] then
+            self:hide_widget()
+        else
+            self:update_widget_icon(info["status"])
+            self:update_widget_text(
+                string.format(
+                    "%s | %s",
+                    info.artists,
+                    info.title
+                )
+            )
+        end
 	end
 
-	local update_widget_text = function(_, stdout, _, _, _)
-		self:update_widget_text(stdout)
-	end
-
-	watch('sp status', 1, update_widget_icon)
-	watch('sp current-oneline', 1, update_widget_text)
+	helpers.newtimer("media-player", 3, update_widget)
 end
 
 function Spotify:exec(command, callback)
 	local spawn_update = function()
 		awful.spawn.easy_async(
-			'sp status',
-			function(stdout, stderr, _, _)
-				self:update_widget_icon(stdout)
+			function() self:info() end,
+			function(info)
+				self:update_widget_icon(info["status"])
 		end)
 	end
 
@@ -105,9 +143,9 @@ function Spotify:signal()
 	--  - button 5: scroll down - previous song
 	
 	self.widget:buttons(awful.util.table.join(
-		awful.button({}, 1, function() self:exec("sp play", _) end),
-		awful.button({}, 4, function() self:exec("sp next", _) end),
-		awful.button({}, 5, function() self:exec("sp prev", _) end)
+		awful.button({}, 1, function() self:exec("playerctl play-pause", _) end),
+		awful.button({}, 4, function() self:exec("playerctl next", _) end),
+		awful.button({}, 5, function() self:exec("playerctl previous", _) end)
 	))
 end
 
