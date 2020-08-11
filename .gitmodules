@@ -18,10 +18,6 @@
 	url = https://github.com/macunha1/awesomewm-memory-notifier
 	branch = master
 
-[submodule "weatherdesk"]
-	path = plugins/weatherdesk
-	url = https://gitlab.com/bharadwaj-raju/WeatherDesk
-	; commit = 7aab3f4cb17ce678966d7e75e1629766957e3b6f
 [submodule "media-player-widget"]
 	path = plugins/media-player
 	url = https://github.com/macunha1/awesomewm-media-player-widget
