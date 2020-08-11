@@ -15,7 +15,7 @@ local dpi   = require("beautiful.xresources").apply_dpi
 -- Plugins (external)
 local calendar        = require("plugins.calendar")
 local memory_piechart = require("plugins.memory")
--- local media_player    = require("plugins.spotify")
+local media_player    = require("plugins.media-player")
 
 local awesome     = awesome
 local client      = client
@@ -146,14 +146,15 @@ calendar({
 }):attach(mytextclock)
 
 -- Media Player
--- local media_player_widget = media_player({
---     icons  = {
---         play   = theme.play,
---         pause  = theme.pause
---     },
---     font       = theme.font,
---     name       = "spotify"
--- }).widget
+local media_player_widget = media_player({
+    icons  = {
+        play   = theme.play,
+        pause  = theme.pause
+    },
+    font         = theme.font,
+    name         = "spotify",
+    refresh_rate = 0.3
+}).widget
 
 -- MPD
 -- Honestly, I never used it
@@ -460,7 +461,7 @@ function theme.at_screen_connect(s)
     -- })
 
     -- Create the wibox
-    s.mywibox = awful.wibar({
+    s.mywibar = awful.wibar({
         position     = theme.wibar_position,
         screen       = s,
         height       = theme.wibar_height,
@@ -472,7 +473,7 @@ function theme.at_screen_connect(s)
     })
 
     -- Add widgets to the wibox
-    s.mywibox:setup {
+    s.mywibar:setup {
         layout = wibox.layout.align.horizontal,
         expand = "none",
         { -- Left widgets
@@ -495,9 +496,9 @@ function theme.at_screen_connect(s)
             volicon,
             volumewidget,
             -- Media Player
-            -- bar_separator,
-            -- media_player_widget,
-            -- blank_space_separator,
+            bar_separator,
+            media_player_widget,
+            blank_space_separator,
             -- Textclock
             bar_separator,
             blank_space_separator,
