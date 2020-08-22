@@ -2,8 +2,7 @@
 
     Awesome WM configuration
 
-    Based on the AWESOME work from github.com/lcpz
-    available at https://github.com/lcpz/awesome-copycats
+    Built on top of https://github.com/lcpz/awesome-copycats
 
 --]]
 
@@ -875,10 +874,6 @@ awful.rules.rules = {
 -- {{{ Signals
 -- Signal function to execute when a new client appears.
 client.connect_signal("manage", function (c)
-    -- Set the windows at the slave,
-    -- i.e. put it at the end of others instead of setting it master.
-    -- if not awesome.startup then awful.client.setslave(c) end
-
     if awesome.startup and
       not c.size_hints.user_position
       and not c.size_hints.program_position then
@@ -934,7 +929,7 @@ client.connect_signal("request::titlebars", function(c)
     }
 end)
 
--- Enable sloppy focus, so that focus follows mouse.
+-- Focus follows mouse pointer.
 client.connect_signal("mouse::enter", function(c)
     c:emit_signal("request::activate", "mouse_enter", {raise = true})
 end)
