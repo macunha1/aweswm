@@ -23,7 +23,7 @@ local config_path = awful.util.getdir("config")
 local my_table    = awful.util.table or gears.table -- 4.{0,1} compatibility
 
 local colors_hex      = {}
-colors_hex.black      = "#111111"
+colors_hex.black      = "#000000"
 colors_hex.red        = "#F84672"
 colors_hex.blue       = "#00AAF9"
 colors_hex.magenta    = "#FC71FF"
@@ -130,9 +130,12 @@ theme.layout_centerwork                         = theme.dir .. "/icons/centerwor
 
 local markup = lain.util.markup
 
+local wibox_container_layout = function(args)
+    return wibox.container.margin(args.bg, 2, 7, 4, 4)
+end
+
 -- Textclock
 local clockicon  = wibox.widget.imagebox(theme.clock)
--- os.setlocale(os.getenv("LANG")) -- to localize the clock
 local mytextclock = wibox.widget.textclock(
     markup.font(theme.font, "%H:%M | %A | %d/%m/%Y"),
     1
@@ -146,54 +149,19 @@ calendar({
 }):attach(mytextclock)
 
 -- Media Player
-local media_player_widget = media_player({
+local spotifyd_widget = media_player({
     icons  = {
         play   = theme.play,
         pause  = theme.pause
     },
     font         = theme.font,
-    name         = "spotify",
-    refresh_rate = 0.3
+    name         = "spotifyd",
+    refresh_rate = 0.5
 }).widget
 
--- MPD
--- Honestly, I never used it
-local mpdicon = wibox.widget.imagebox()
-theme.mpd = lain.widget.mpd({
-    settings = function()
-        if mpd_now.state == "play" then
-            title = mpd_now.title
-            artist  = " " .. mpd_now.artist .. markup(
-                theme.fg_normal,
-                string.format(
-                    " <span font='%s'> </span>|<span font='%s'> </span>",
-                    theme.font,
-                    theme.font
-                )
-            )
-            mpdicon:set_image(theme.play)
-        elseif mpd_now.state == "pause" then
-            title = "mpd "
-            artist  = "paused" .. markup(
-                theme.fg_normal,
-                " |<span font='".. theme.font .. "'> </span>"
-            )
-            mpdicon:set_image(theme.pause)
-        else
-            title  = ""
-            artist = ""
-            mpdicon._private.image = nil
-            mpdicon:emit_signal("widget::redraw_needed")
-            mpdicon:emit_signal("widget::layout_changed")
-        end
-
-        widget:set_markup(markup.font(theme.font, markup(colors_hex.blue, title) .. artist))
-    end
-})
-
 -- Battery
-local baticon = wibox.widget.imagebox(theme.bat)
-local batbar = wibox.widget {
+local battery_icon = wibox.widget.imagebox(theme.bat)
+local battery_bar = wibox.widget {
     forced_height    = theme.widget_forced_height,
     forced_width     = theme.widget_forced_width,
     color            = theme.fg_normal,
@@ -204,49 +172,45 @@ local batbar = wibox.widget {
     widget           = wibox.widget.progressbar,
 }
 
-local batupd = lain.widget.bat({
+lain.widget.bat({
     settings = function()
         if (not bat_now.status) or bat_now.status == "N/A" or type(bat_now.perc) ~= "number" then return end
 
         if bat_now.status == "Charging" then
-            baticon:set_image(theme.ac)
+            battery_icon:set_image(theme.ac)
             if bat_now.perc >= 98 then
-                batbar:set_color(theme.fg_focus)
+                battery_bar:set_color(theme.fg_focus)
             elseif bat_now.perc > 50 then
-                batbar:set_color(theme.fg_normal)
+                battery_bar:set_color(theme.fg_normal)
             elseif bat_now.perc > 15 then
-                batbar:set_color(theme.fg_normal)
+                battery_bar:set_color(theme.fg_normal)
             else
-                batbar:set_color(colors_hex.red)
+                battery_bar:set_color(colors_hex.red)
             end
         else
             if bat_now.perc >= 98 then
-                batbar:set_color(theme.fg_focus)
+                battery_bar:set_color(theme.fg_focus)
             elseif bat_now.perc > 50 then
-                batbar:set_color(theme.fg_normal)
-                baticon:set_image(theme.bat)
+                battery_bar:set_color(theme.fg_normal)
+                battery_icon:set_image(theme.bat)
             elseif bat_now.perc > 15 then
-                batbar:set_color(theme.fg_normal)
-                baticon:set_image(theme.bat_low)
+                battery_bar:set_color(theme.fg_normal)
+                battery_icon:set_image(theme.bat_low)
             else
-                batbar:set_color(colors_hex.red)
-                baticon:set_image(theme.bat_no)
+                battery_bar:set_color(colors_hex.red)
+                battery_icon:set_image(theme.bat_no)
             end
         end
-        batbar:set_value(bat_now.perc / 100)
+        battery_bar:set_value(bat_now.perc / 100)
     end
 })
 
-local wibox_container_layout = function(args)
-    return wibox.container.margin(args.bg, 2, 7, 4, 4)
-end
-
-local batbg = wibox.container.background(
-    batbar,
+local battery_bg = wibox.container.background(
+    battery_bar,
     theme.bg_normal,
     gears.shape.rectangle
 )
-local batwidget = wibox_container_layout({bg = batbg})
+local battery_widget = wibox_container_layout({bg = battery_bg})
 
 -- Memory (RAM)
 local memicon  = wibox.widget.imagebox(theme.mem)
@@ -328,7 +292,7 @@ theme.volume = lain.widget.alsabar {
     ticks_size          = theme.widget_ticks_size,
     notification_preset = { font = theme.font },
     --togglechannel     = "IEC958,3",
-    
+
     settings = function()
         if volume_now.status == "off" then
             volicon:set_image(theme.vol_mute)
@@ -452,7 +416,7 @@ function theme.at_screen_connect(s)
         buttons = awful.util.taglist_buttons,
     })
 
-    -- NOTE: Deactivated due to lack of use 
+    -- NOTE: Deactivated due to lack of use
     -- Uncomment to have the tasklist widget back
     -- s.mytasklist = awful.widget.tasklist({
     --     screen  = s,
@@ -489,27 +453,28 @@ function theme.at_screen_connect(s)
         -- s.mytasklist, -- Middle-left widget
         { -- Middle-right widgets
             layout = wibox.layout.fixed.horizontal,
-            -- Enable the battery widget (if you have a battery)
+            -- Battery
+            -- battery_icon,
+            -- battery_widget,
             -- bar_separator,
-            -- baticon,
-            -- batwidget,
+            -- Volume
             volicon,
             volumewidget,
+            bar_separator,
             -- Media Player
-            bar_separator,
-            media_player_widget,
+            spotifyd_widget,
             blank_space_separator,
-            -- Textclock
             bar_separator,
+            -- Textclock
             blank_space_separator,
             mytextclock,
             blank_space_separator,
-            -- Memory
             bar_separator,
+            -- Memory
             memicon,
             ram_wid,
-            -- CPU
             bar_separator,
+            -- CPU
             cpuicon,
             cpuwidget,
         },

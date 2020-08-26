@@ -1,8 +1,10 @@
 --[[
 
+    Matheus Cunha <macunha@protonmail.com>
     Awesome WM configuration
 
-    Built on top of https://github.com/lcpz/awesome-copycats
+    Extends the work from https://github.com/lcpz/awesome-copycats
+    with a fully modularized setup and proper support for async calls
 
 --]]
 
