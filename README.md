@@ -1,18 +1,21 @@
 <h1 align="center">Awesome WM rc.lua</h1>
 
-Awesome configuration for Awesome WM. User interface might not be so shiny and
-beautiful as the [polybar](https://github.com/polybar/polybar) is. However it
-works nice and is:
+_An Awesome configuration_ for the AwesomeWM!
+
+Fully async setup using the best-practices from Awesome documentation about
+awful implementation. Containing a fully modularized setup (through git
+submodules) as an "package manager" implementation, to easy support updates.
+
+<p align="center">
+<span><img src="/../screenshots/preview.png?raw=true" height="512" /></span>
+</p>
+
+User interface aimed for a tiny, minimalistic and performatic setup. Using pure Lua
+code, together with AwesomeWM libraries:
 
   + properly polished with async calls, using the best practices of Lua coding
     and Awesome awful methods;
   + UI was built to be simple, distraction-free and minimalistic;
-
-Additionally, this repository contains a fully modularized AwesomeWM + Lua
-setup, using "plugins" through Git submodules. As most of my configurations, it
-aims for a clean, tiny and self-contained implementation
-[[1]](https://github.com/macunha1/definitely-not-vimrc)
-[[2]](https://github.com/macunha1/configuration.nix)
 
 ## Dependencies
 
@@ -32,6 +35,8 @@ git clone https://github.com/macunha1/awesomewm-configuration \
 cd ~/.config/awesome
 git submodule sync --recursive .
 ```
+
+Further configurations are available [[here]](https://github.com/macunha1/configuration.nix)
 
 Then you're good to go (:
 

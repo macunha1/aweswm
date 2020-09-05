@@ -10,7 +10,7 @@
 
 -- {{{ Required libraries
 local awesome, client, tag = awesome, client, tag
-local mouse, screen, ipars = mouse, screen, ipars 
+local mouse, screen, ipars = mouse, screen, ipars
 local string, table, os    = string, table, os
 local tostring, type       = tostring, type
 
@@ -82,7 +82,7 @@ end
 -- }}}
 
 -- {{{ Variable definitions
-local theme        = "cyan-neon"
+local theme        = "megaman"
 local modkey       = "Mod4"
 local altkey       = "Mod1"
 local terminal     = "alacritty"
@@ -128,12 +128,14 @@ awful.util.tagnames = { "fn", "main", "void", "args", "*" }
 awful.layout.layouts = {
     -- Full list https://awesomewm.org/doc/api/libraries/awful.layout.html#Client_layouts
     awful.layout.suit.magnifier,
+    awful.layout.suit.spiral.dwindle,
     awful.layout.suit.tile,
     awful.layout.suit.fair,
     awful.layout.suit.tile.top,
+    awful.layout.suit.corner.nw,
     awful.layout.suit.fair.horizontal,
-    awful.layout.suit.spiral.dwindle,
     awful.layout.suit.tile.left,
+    awful.layout.suit.floating,
 }
 
 awful.util.taglist_buttons = my_table.join(

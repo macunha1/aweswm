@@ -1,8 +1,7 @@
 --[[
+     Megaman lcpz/copycatz custom Awesome WM theme
 
-     cyan-neon custom Awesome WM theme
      github.com/macunha1
-
 --]]
 
 local gears = require("gears")
@@ -36,7 +35,7 @@ colors_hex.lightcyan  = "#4DEEDD"
 colors_hex.white      = "#FBF1C7"
 
 local theme                                     = {}
-theme.dir                                       = config_path .. "/themes/cyan-neon"
+theme.dir                                       = config_path .. "/themes/megaman"
 theme.wallpaper                                 = nil
 theme.font                                      = "Source Code Pro 9"
 theme.fg_normal                                 = colors_hex.white
@@ -149,14 +148,14 @@ calendar({
 }):attach(mytextclock)
 
 -- Media Player
-local spotifyd_widget = media_player({
+local spotify_widget = media_player({
     icons  = {
         play   = theme.play,
         pause  = theme.pause
     },
     font         = theme.font,
-    name         = "spotifyd",
-    refresh_rate = 0.5
+    name         = "spotify",
+    refresh_rate = 0.7
 }).widget
 
 -- Battery
@@ -242,7 +241,7 @@ local ram_wid = wibox_container_layout({bg = rambg})
 
 memory_piechart({
     colors = {
-        theme.fg_focus,
+        theme.fg_urgent,
         theme.bg_normal,
         theme.fg_normal,
         colors_hex.lightgreen,
@@ -462,7 +461,7 @@ function theme.at_screen_connect(s)
             volumewidget,
             bar_separator,
             -- Media Player
-            spotifyd_widget,
+            spotify_widget,
             blank_space_separator,
             bar_separator,
             -- Textclock
