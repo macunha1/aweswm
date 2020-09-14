@@ -82,7 +82,7 @@ end
 -- }}}
 
 -- {{{ Variable definitions
-local theme        = "megaman"
+local theme        = "yin-yang"
 local modkey       = "Mod4"
 local altkey       = "Mod1"
 local terminal     = "alacritty"
