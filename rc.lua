@@ -664,15 +664,24 @@ globalkeys = my_table.join(
     awful.key(
         { modkey }, "b",
         function () awful.spawn(browser) end,
-        {description = "run browser", group = "launcher"}
+        {description = "open browser", group = "launcher"}
+    ),
+
+    -- GUI Editor
+    awful.key(
+        { modkey, "Shift" }, "e",
+        function () awful.spawn(gui_editor) end,
+        {description = "open GUI text editor", group = "editor"}
     ),
 
     -- Slack
     awful.key(
         { modkey, "Shift" }, "s",
         function() awful.spawn("slack") end,
-              {description = "opens slack messaging application", group =
-                   "messaging"}
+        {
+            description = "opens slack messaging application",
+            group ="messaging"
+        }
     ),
 
     -- Launcher
