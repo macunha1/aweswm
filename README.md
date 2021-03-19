@@ -1,13 +1,13 @@
 <h1 align="center">Awesome WM rc.lua</h1>
 
-_An Awesome configuration_ for the AwesomeWM!
+_An Aweswm configuration_ for the AwesomeWM!
 
 Fully async setup using the best-practices from Awesome documentation about
 awful implementation. Containing a fully modularized setup (through git
 submodules) as an "package manager" implementation, to easy support updates.
 
 <p align="center">
-<span><img src="/../screenshots/preview.png?raw=true" height="512" /></span>
+  <span><img src="/../screenshots/preview.png?raw=true" height="512" /></span>
 </p>
 
 User interface aimed for a tiny, minimalistic and performatic setup. Using pure Lua
@@ -29,11 +29,9 @@ Once the dependencies are installed, you just simply need to clone this
 repository and its submodules
 
 ``` sh
-git clone https://github.com/macunha1/awesomewm-configuration \
-    ~/.config/awesome
-
-cd ~/.config/awesome
-git submodule sync --recursive .
+git clone git@github.com:macunha1/aweswm.git \
+  --recurse-submodules \
+  "${HOME}/.config/awesome"
 ```
 
 Further configurations are available [[here]](https://github.com/macunha1/configuration.nix)
