@@ -186,9 +186,19 @@ local spotify_widget = media_player({
         pause  = theme.pause,
         stop   = theme.stop
     },
-    autohide     = false,
     font         = theme.bold_font,
     name         = "spotify",
+    refresh_rate = 0.7
+}).widget
+
+local mpv_widget = media_player({
+    icons  = {
+        play   = theme.play,
+        pause  = theme.pause,
+        stop   = theme.stop
+    },
+    font         = theme.bold_font,
+    name         = "mpv",
     refresh_rate = 0.7
 }).widget
 
@@ -482,6 +492,7 @@ function theme.at_screen_connect(s)
             volumewidget,
             -- Media Player
             spotify_widget,
+            mpv_widget,
             blank_space_separator,
             -- Textclock
             mytextclock,
