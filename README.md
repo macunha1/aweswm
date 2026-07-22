@@ -1,43 +1,84 @@
-<h1 align="center">Awesome WM rc.lua</h1>
+# AwesomeWM Config
 
-_An Aweswm configuration_ for the AwesomeWM!
-
-Fully async setup using the best-practices from Awesome documentation about
-awful implementation. Containing a fully modularized setup (through git
-submodules) as an "package manager" implementation, to easy support updates.
+An AWESOME config: simple, minimalistic, and fast.
 
 <p align="center">
-  <span><img src="/../screenshots/preview.png?raw=true" height="512" /></span>
+  <img src="/../screenshots/preview.png?raw=true" height="512" />
 </p>
 
-User interface aimed for a tiny, minimalistic and performatic setup. Using pure Lua
-code, together with AwesomeWM libraries:
+## Install
 
-  + properly polished with async calls, using the best practices of Lua coding
-    and Awesome awful methods;
-  + UI was built to be simple, distraction-free and minimalistic;
+Clone it as the AwesomeWM config directory:
 
-## Dependencies
-
-AwesomeWM Media Player Widget used in the wibar depends on [Lua D-Bus
-Proxy](https://github.com/stefano-m/lua-dbus_proxy) to handle connections with
-D-Bus interface. Further instructions [available here](https://github.com/macunha1/awesomewm-media-player-widget#installation)
-
-## Installation
-
-Once the dependencies are installed, you just simply need to clone this
-repository and its submodules
-
-``` sh
-git clone git@github.com:macunha1/aweswm.git \
-  --recurse-submodules \
+```sh
+git clone --recurse-submodules git@github.com:macunha1/aweswm.git \
   "${HOME}/.config/awesome"
 ```
 
-Further configurations are available [[here]](https://github.com/macunha1/configuration.nix)
+Already cloned?
 
-Then you're good to go (:
+```sh
+git submodule update --init --recursive
+```
 
-``` sh
+Start AwesomeWM:
+
+```sh
 awesome
 ```
+
+## Runtime Assumptions
+
+This config expects the usual AwesomeWM Lua libraries plus the vendored
+submodules in [.gitmodules](./.gitmodules): `lain`, `awesome-freedesktop`,
+`calendar`, `awesomewm-memory-notifier`, and `awesomewm-media-player-widget`.
+
+It also shells out to tools I use locally:
+
+- `alacritty`
+- `chromium` (or `$BROWSER`)
+- `emacs`, `vim` (or `$EDITOR`)
+- `pcmanfm`
+- `rofi`
+- `xfce4-screenshooter`
+- `xbacklight`
+- `amixer`, `alsamixer`
+- `wpexec`
+- `~/.local/bin/screenlock.sh`
+
+MPRIS media controls need `lua-dbus_proxy`.
+
+## Change The Basics
+
+The main defaults are near the top of [rc.lua](./rc.lua):
+
+```lua
+local theme        = "yin-yang"
+local terminal     = "alacritty"
+local gui_editor   = "emacs"
+local browser      = os.getenv("BROWSER") or "chromium"
+local media_player = "spotify"
+```
+
+Available themes:
+
+- `yin-yang`
+- `retrowave`
+
+Theme files live in [themes](./themes). Icons live in [icons/simplicity](./icons/simplicity).
+
+## Useful Bindings
+
+- `Mod4 + Return`: terminal
+- `Mod4 + e`: file manager
+- `Mod4 + w`: Awesome menu
+- `Mod4 + Home`: lock screen
+- `Mod4 + h/j/k/l`: focus by direction
+- `Mod4 + Space`: next layout
+- `Mod4 + Shift + Space`: previous layout
+- `Mod4 + Shift + n/r/d`: add, rename, delete tag
+- `Mod4 + z`: dropdown terminal
+- `Print`: screenshot
+- `XF86Audio*`: media and volume controls
+
+The full keymap is in [rc.lua](./rc.lua).

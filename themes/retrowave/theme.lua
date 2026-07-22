@@ -18,8 +18,8 @@ local media_player    = require("plugins.media-player")
 
 local awesome     = awesome
 local client      = client
-local config_path = awful.util.getdir("config")
-local my_table    = awful.util.table or gears.table -- 4.{0,1} compatibility
+local config_path = gears.filesystem.get_configuration_dir()
+local my_table    = gears.table
 
 local colors_hex      = {}
 colors_hex.black      = "#000000"
@@ -34,10 +34,10 @@ colors_hex.lightblue  = "#00FCF8"
 colors_hex.lightcyan  = "#4DEEDD"
 colors_hex.white      = "#FBF1C7"
 
-icons_dir = config_path .. "/icons/simplicity"
+local icons_dir = config_path .. "icons/simplicity"
 
 local theme                                     = {}
-theme.dir                                       = config_path .. "/themes/megaman"
+theme.dir                                       = config_path .. "themes/retrowave"
 theme.wallpaper                                 = nil
 theme.font                                      = "Source Code Pro 9"
 theme.fg_normal                                 = colors_hex.white
@@ -317,35 +317,55 @@ theme.volume.tooltip.wibox.fg = theme.fg_focus
 theme.volume.bar:buttons(
     my_table.join(
         awful.button({}, 1, function()
-            awful.spawn.easy_async(string.format("%s -e alsamixer", awful.util.terminal))
+            awful.spawn({ awful.util.terminal, "-e", "alsamixer" })
         end),
         awful.button({}, 2, function()
             awful.spawn.easy_async(
-                string.format("%s set %s 100%%", theme.volume.cmd, theme.volume.channel)
+                {
+                    "amixer",
+                    "-q",
+                    "set",
+                    theme.volume.channel,
+                    "100%",
+                },
+                theme.volume.update
             )
-            theme.volume.update()
         end),
         awful.button({}, 3, function()
             awful.spawn.easy_async(
-                string.format(
-                    "%s set %s toggle",
-                    theme.volume.cmd,
-                    theme.volume.togglechannel or theme.volume.channel
-                )
+                {
+                    "amixer",
+                    "-q",
+                    "set",
+                    theme.volume.togglechannel or theme.volume.channel,
+                    "toggle",
+                },
+                theme.volume.update
             )
-            theme.volume.update()
         end),
         awful.button({}, 4, function()
             awful.spawn.easy_async(
-                string.format("%s set %s 1%%+", theme.volume.cmd, theme.volume.channel)
+                {
+                    "amixer",
+                    "-q",
+                    "set",
+                    theme.volume.channel,
+                    "1%+",
+                },
+                theme.volume.update
             )
-            theme.volume.update()
         end),
         awful.button({}, 5, function()
             awful.spawn.easy_async(
-                string.format("%s set %s 1%%-", theme.volume.cmd, theme.volume.channel)
+                {
+                    "amixer",
+                    "-q",
+                    "set",
+                    theme.volume.channel,
+                    "1%-",
+                },
+                theme.volume.update
             )
-            theme.volume.update()
         end)
 ))
 

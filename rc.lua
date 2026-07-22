@@ -24,9 +24,11 @@ local lain          = require("lain")
 local freedesktop   = require("freedesktop")
 local hotkeys_popup = require("awful.hotkeys_popup").widget
                       require("awful.hotkeys_popup.keys")
+local audio         = require("lib.audio")
+local mpris         = require("lib.mpris")
 
-local config_path   = awful.util.getdir("config")
-local my_table      = awful.util.table or gears.table -- 4.{0,1} compatibility
+local config_path   = gears.filesystem.get_configuration_dir()
+local my_table      = gears.table
 local dpi           = require("beautiful.xresources").apply_dpi
 -- }}}
 
@@ -62,22 +64,27 @@ end
 -- }}}
 
 -- {{{ Run once during AwesomeWM startup
-local function run_once(cmd_arr)
-    for _, cmd in ipairs(cmd_arr) do
-        awful.spawn.with_shell(
-            string.format(
-                "pgrep -u $USER -fx '%s' > /dev/null || (%s)",
-                cmd,
-                cmd
-            )
-        )
+local function spawn_once(command)
+    local process_name = type(command) == "table" and table.concat(command, " ") or command
+    local user = os.getenv("USER") or ""
+
+    awful.spawn.easy_async({ "pgrep", "-u", user, "-fx", process_name }, function(_, _, _, exit_code)
+        if exit_code ~= 0 then
+            awful.spawn(command)
+        end
+    end)
+end
+
+local function run_once(commands)
+    for _, command in ipairs(commands) do
+        spawn_once(command)
     end
 end
 
 -- Usage example
 -- run_once({
---     'dex -a -s /etc/xdg/autostart/:~/.config/autostart/',
---     'gtk-launch entryname',
+--     { "dex", "-a", "-s", "/etc/xdg/autostart/:~/.config/autostart/" },
+--     { "gtk-launch", "entryname" },
 -- })
 -- }}}
 
@@ -92,36 +99,20 @@ local browser      = os.getenv("BROWSER") or "chromium"
 local media_player = "spotify"
 
 local screenlock   =  function ()
-    awful.spawn.with_shell(os.getenv("HOME") .. "/.local/bin/screenlock.sh")
+    awful.spawn({ os.getenv("HOME") .. "/.local/bin/screenlock.sh" })
 end
 
-local playerctl = {
-    play = function() awful.spawn.with_shell("playerctl play-pause") end,
-    prev = function() awful.spawn.with_shell("playerctl previous") end,
-    next = function() awful.spawn.with_shell("playerctl next") end,
-    stop = function() awful.spawn.with_shell("playerctl stop") end,
-}
+local media_controls = mpris.new({
+    preferred_player = media_player,
+    naughty = naughty,
+})
 
-local alsa_exec = function(args, channel)
-    awful.spawn.easy_async(
-        string.format(
-            "amixer -q set %s %s",
-            args.channel or
-                beautiful.volume.togglechannel or
-                beautiful.volume.channel,
-            args.command
-        ),
-        callback or beautiful.volume.update
-    )
-end
-
-local alsa = {
-    volume_up   = function() alsa_exec({command="5%+"}) end,
-    volume_down = function() alsa_exec({command="5%-"}) end,
-    mute_audio  = function() alsa_exec({command="toggle"}) end,
-    mute_mic    = function() alsa_exec({command="toggle", channel="Mic"}) end,
-    mute_audio  = function() alsa_exec({command="toggle"}) end,
-}
+local audio_controls = audio.new({
+    awful = awful,
+    beautiful = beautiful,
+    naughty = naughty,
+    script_path = config_path .. "lib/wireplumber/audio_control.lua",
+})
 
 awful.util.terminal = terminal
 awful.util.tagnames = { "fn", "main", "void", "args", "*" }
@@ -214,16 +205,8 @@ beautiful.init(string.format("%sthemes/%s/theme.lua", config_path, theme))
 -- {{{ Menu
 local myawesomemenu = {
     { "hotkeys", function() return false, hotkeys_popup.show_help end },
-    { "manual", terminal .. " -e man awesome" },
-    {
-        "edit config",
-        string.format(
-            "%s -e %s %s",
-            terminal,
-            editor,
-            awesome.conffile
-        )
-    },
+    { "manual", function() awful.spawn({ terminal, "-e", "man", "awesome" }) end },
+    { "edit config", function() awful.spawn({ terminal, "-e", editor, awesome.conffile }) end },
     { "restart", awesome.restart },
     { "quit", function() awesome.quit() end }
 }
@@ -235,7 +218,7 @@ awful.util.mymainmenu = freedesktop.menu.build({
         -- other triads can be put here
     },
     after = {
-        { "Open terminal", terminal },
+        { "Open terminal", function() awful.spawn({ terminal }) end },
         -- other triads can be put here
     }
 })
@@ -275,13 +258,13 @@ globalkeys = my_table.join(
     -- https://github.com/lcpz/dots/blob/master/bin/screenshot
     awful.key(
         {}, "Print",
-        function () awful.spawn("xfce4-screenshooter") end,
+        function () awful.spawn({ "xfce4-screenshooter" }) end,
         {description = "take a screenshot", group = "hotkeys"}
     ),
 
     awful.key(
         { altkey }, "p",
-        function() awful.spawn("screenshot") end,
+        function() awful.spawn({ "screenshot" }) end,
         {description = "take a screenshot", group = "hotkeys"}
     ),
 
@@ -295,7 +278,7 @@ globalkeys = my_table.join(
     -- File manager
     awful.key(
         { modkey, }, "e",
-        function () awful.spawn("pcmanfm") end,
+        function () awful.spawn({ "pcmanfm" }) end,
         {description = "open file manager", group="hotkeys"}
     ),
 
@@ -570,124 +553,114 @@ globalkeys = my_table.join(
     -- Brightness
     awful.key(
         { }, "XF86MonBrightnessUp",
-        function () awful.spawn.easy_async("xbacklight -inc 10") end,
+        function () awful.spawn.easy_async({ "xbacklight", "-inc", "10" }) end,
         {description = "+10%", group = "hotkeys"}
     ),
 
     awful.key(
         { }, "XF86MonBrightnessDown",
-        function () awful.spawn.easy_async("xbacklight -dec 10") end,
+        function () awful.spawn.easy_async({ "xbacklight", "-dec", "10" }) end,
         {description = "-10%", group = "hotkeys"}
     ),
 
-    -- {{ Media Player Control (uses playerctl)
+    -- {{ Media Player Control (uses MPRIS over DBus)
     awful.key(
         { modkey, "Shift" }, "m",
-        function () awful.spawn.easy_async(media_player) end,
+        function () awful.spawn({ media_player }) end,
         {description = "open default media player client", group = "player"}
     ),
 
     awful.key(
         {}, "XF86AudioPrev",
-        playerctl.prev,
+        media_controls.prev,
         {description = "go to previous song on player", group = "player"}
     ),
 
     awful.key(
         {}, "XF86AudioNext",
-        playerctl.next,
+        media_controls.next,
         {description = "go to next song on player", group = "player"}
     ),
 
     awful.key(
         {}, "XF86AudioPlay",
-        playerctl.play,
+        media_controls.play,
         {description = "play current song on player", group = "player"}
     ),
 
     awful.key(
         {}, "XF86AudioStop",
-        playerctl.stop,
+        media_controls.stop,
         {description = "stop current song on player", group = "player"}
     ),
 
     awful.key(
         { modkey , "Control"}, "s",
-        playerctl.play, -- same as XF86AudioPlay
+        media_controls.play, -- same as XF86AudioPlay
         {description = "play current song on player", group = "player"}
     ),
 
     awful.key(
         { modkey , "Control"}, "d",
-        playerctl.next, -- same as XF86AudioNext
+        media_controls.next, -- same as XF86AudioNext
         {description = "go to next song on player", group = "player"}
     ),
 
     awful.key(
         { modkey , "Control"}, "a",
-        playerctl.prev, -- same as XF86AudioPrev
+        media_controls.prev, -- same as XF86AudioPrev
         {description = "go to previous song on player", group = "player"}
     ),
     -- Media Player Control }}
 
-    -- ALSA volume control
-    awful.key({}, "XF86AudioRaiseVolume", alsa.volume_up),
-    awful.key({}, "XF86AudioLowerVolume", alsa.volume_down),
-    awful.key({}, "XF86AudioMute", alsa.mute_audio),
-    awful.key({}, "XF86AudioMicMute", alsa.mute_mic),
+    -- PipeWire volume control
+    awful.key({}, "XF86AudioRaiseVolume", audio_controls.volume_up),
+    awful.key({}, "XF86AudioLowerVolume", audio_controls.volume_down),
+    awful.key({}, "XF86AudioMute", audio_controls.mute_audio),
+    awful.key({}, "XF86AudioMicMute", audio_controls.mute_mic),
 
     awful.key(
         { altkey }, "m",
-        alsa.mute_audio,
+        audio_controls.mute_audio,
         {description = "toggle audio mute", group = "hotkeys"}
     ),
 
     awful.key(
         { altkey, "Control" }, "m",
-        alsa.mute_audio,
+        audio_controls.mute_mic,
         {description = "toggle mic mute", group = "hotkeys"}
     ),
 
     awful.key(
         { altkey }, "0",
-        alsa.volume_up,
+        audio_controls.volume_up,
         {description = "volume +5%", group = "hotkeys"}
     ),
 
     awful.key(
         { altkey }, "9",
-        alsa.volume_down,
+        audio_controls.volume_down,
         {description = "volume -5%", group = "hotkeys"}
     ),
 
     -- Browser
     awful.key(
         { modkey }, "b",
-        function () awful.spawn(browser) end,
+        function () awful.spawn({ browser }) end,
         {description = "open browser", group = "launcher"}
     ),
 
     -- GUI Editor
     awful.key(
         { modkey, "Shift" }, "e",
-        function () awful.spawn(gui_editor) end,
+        function () awful.spawn({ gui_editor }) end,
         {description = "open GUI text editor", group = "editor"}
-    ),
-
-    -- Slack
-    awful.key(
-        { modkey, "Shift" }, "s",
-        function() awful.spawn("slack") end,
-        {
-            description = "opens slack messaging application",
-            group ="messaging"
-        }
     ),
 
     -- Launcher
     awful.key(
         { modkey }, "r",
-        function () awful.spawn('rofi -show drun -columns 2') end,
+        function () awful.spawn({ "rofi", "-show", "drun", "-columns", "2" }) end,
         {description = "run program", group = "launcher"}
     )
     --]]
