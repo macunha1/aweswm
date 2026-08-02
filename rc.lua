@@ -28,6 +28,11 @@ local audio         = require("lib.audio")
 local mpris         = require("lib.mpris")
 
 local config_path   = gears.filesystem.get_configuration_dir()
+package.path = package.path
+    .. ";" .. config_path .. "/plugins/screenlock/lua/?.lua"
+    .. ";" .. config_path .. "/plugins/screenlock/lua/?/init.lua"
+local screenlock    = require("awesomewm_screenlock")()
+
 local my_table      = gears.table
 local dpi           = require("beautiful.xresources").apply_dpi
 -- }}}
@@ -97,10 +102,6 @@ local editor       = os.getenv("EDITOR") or "vim"
 local gui_editor   = "emacs"
 local browser      = os.getenv("BROWSER") or "chromium"
 local media_player = "spotify"
-
-local screenlock   =  function ()
-    awful.spawn({ os.getenv("HOME") .. "/.local/bin/screenlock.sh" })
-end
 
 local media_controls = mpris.new({
     preferred_player = media_player,
@@ -276,7 +277,7 @@ globalkeys = my_table.join(
     -- Screen locker
     awful.key(
         { modkey, }, "Home",
-        screenlock,
+        function() screenlock:lock() end,
         {description = "lock screen", group = "hotkeys"}
     ),
 

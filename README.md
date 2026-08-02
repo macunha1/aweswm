@@ -44,7 +44,9 @@ It also shells out to tools I use locally:
 - `xbacklight`
 - `amixer`, `alsamixer`
 - `wpexec`
-- `~/.local/bin/screenlock.sh`
+- `awesomewm-screenlock-plugin`
+  [[macunha1/awesomewm-screenlock-plugin]](https://github.com/macunha1/awesomewm-screenlock-plugin)
+  for the screenlock integration
 
 MPRIS media controls need `lua-dbus_proxy`.
 

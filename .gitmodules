@@ -22,3 +22,7 @@
 	path = plugins/media-player
 	url = https://github.com/macunha1/awesomewm-media-player-widget
 	branch = master
+[submodule "plugins/screenlock"]
+	path = plugins/screenlock
+	url = https://github.com/macunha1/awesomewm-screenlock-plugin
+	branch = main
