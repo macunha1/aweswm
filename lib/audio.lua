@@ -1,10 +1,11 @@
 local Audio = {}
 
 local action_configs = {
-    ["volume-up"] = '{"action":"volume-up"}',
-    ["volume-down"] = '{"action":"volume-down"}',
-    ["mute-audio"] = '{"action":"mute-audio"}',
-    ["mute-mic"] = '{"action":"mute-mic"}',
+    ["volume-up"] = "volume-up",
+    ["volume-down"] = "volume-down",
+    ["volume-max"] = "volume-max",
+    ["mute-audio"] = "mute-audio",
+    ["mute-mic"] = "mute-mic",
 }
 
 local function notify_error(naughty, message)
@@ -44,6 +45,10 @@ function Audio.new(args)
 
     controls.volume_down = function()
         run_wireplumber_action("volume-down", args)
+    end
+
+    controls.volume_max = function()
+        run_wireplumber_action("volume-max", args)
     end
 
     controls.mute_audio = function()

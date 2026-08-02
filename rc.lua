@@ -114,6 +114,10 @@ local audio_controls = audio.new({
     script_path = config_path .. "lib/wireplumber/audio_control.lua",
 })
 
+-- Make the PipeWire controls available while the selected theme builds its
+-- volume widget during beautiful.init().
+beautiful.audio_controls = audio_controls
+
 awful.util.terminal = terminal
 awful.util.tagnames = { "fn", "main", "void", "args", "*" }
 awful.layout.layouts = {
@@ -236,7 +240,8 @@ screen.connect_signal("property::geometry", function(s)
         if type(wallpaper) == "function" then
             wallpaper = wallpaper(s)
         end
-        gears.wallpaper.maximized(wallpaper, s, true)
+        gears.wallpaper.set("#000000", s)
+        gears.wallpaper.maximized(wallpaper, s, false)
     end
 end)
 

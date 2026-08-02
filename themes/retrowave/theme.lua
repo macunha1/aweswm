@@ -284,22 +284,22 @@ local cpubg = wibox.container.background(
 )
 local cpuwidget = wibox_container_layout({bg = cpubg})
 
--- ALSA volume bar
+-- PipeWire/PulseAudio volume bar
 local volicon = wibox.widget.imagebox(theme.vol)
-theme.volume = lain.widget.alsabar {
+theme.volume = lain.widget.pulsebar {
     width               = theme.widget_forced_width,
     border_width        = 0,
     ticks               = theme.widget_ticks,
     ticks_size          = theme.widget_ticks_size,
     notification_preset = { font = theme.font },
-    --togglechannel     = "IEC958,3",
+    cmd                 = "wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{ printf \"volume: %.0f%%\\n\", $2 * 100; if ($3 == \"[MUTED]\") print \"muted: yes\"; else print \"muted: no\" }'",
 
     settings = function()
-        if volume_now.status == "off" then
+        if volume_now.muted == "yes" then
             volicon:set_image(theme.vol_mute)
-        elseif volume_now.level == 0 then
+        elseif volume_now.left == "0" then
             volicon:set_image(theme.vol_no)
-        elseif volume_now.level <= 50 then
+        elseif tonumber(volume_now.left) <= 50 then
             volicon:set_image(theme.vol_low)
         else
             volicon:set_image(theme.vol)
@@ -317,55 +317,19 @@ theme.volume.tooltip.wibox.fg = theme.fg_focus
 theme.volume.bar:buttons(
     my_table.join(
         awful.button({}, 1, function()
-            awful.spawn({ awful.util.terminal, "-e", "alsamixer" })
+            awful.spawn({ "pavucontrol" })
         end),
         awful.button({}, 2, function()
-            awful.spawn.easy_async(
-                {
-                    "amixer",
-                    "-q",
-                    "set",
-                    theme.volume.channel,
-                    "100%",
-                },
-                theme.volume.update
-            )
+            beautiful.audio_controls.volume_max()
         end),
         awful.button({}, 3, function()
-            awful.spawn.easy_async(
-                {
-                    "amixer",
-                    "-q",
-                    "set",
-                    theme.volume.togglechannel or theme.volume.channel,
-                    "toggle",
-                },
-                theme.volume.update
-            )
+            beautiful.audio_controls.mute_audio()
         end),
         awful.button({}, 4, function()
-            awful.spawn.easy_async(
-                {
-                    "amixer",
-                    "-q",
-                    "set",
-                    theme.volume.channel,
-                    "1%+",
-                },
-                theme.volume.update
-            )
+            beautiful.audio_controls.volume_up()
         end),
         awful.button({}, 5, function()
-            awful.spawn.easy_async(
-                {
-                    "amixer",
-                    "-q",
-                    "set",
-                    theme.volume.channel,
-                    "1%-",
-                },
-                theme.volume.update
-            )
+            beautiful.audio_controls.volume_down()
         end)
 ))
 
@@ -409,7 +373,8 @@ function theme.at_screen_connect(s)
         wallpaper = wallpaper(s)
     end
 
-    gears.wallpaper.maximized(wallpaper, s, true)
+    gears.wallpaper.set("#000000", s)
+    gears.wallpaper.maximized(wallpaper, s, false)
 
     -- Tags
     awful.tag(awful.util.tagnames, s, awful.layout.layouts)

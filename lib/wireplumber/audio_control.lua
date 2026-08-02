@@ -9,6 +9,10 @@ local actions = {
         media_class = "Audio/Sink",
         volume_delta = -0.05,
     },
+    ["volume-max"] = {
+        media_class = "Audio/Sink",
+        volume = 1.0,
+    },
     ["mute-audio"] = {
         media_class = "Audio/Sink",
         toggle_mute = true,
@@ -38,9 +42,13 @@ local function set_default_node_volume(default_nodes, mixer, action)
         return
     end
 
-    if action.volume_delta then
+    if action.volume ~= nil then
+        mixer:call("set-volume", node_id, { volume = action.volume })
+    elseif action.volume_delta then
         local new_volume = (current_volume.volume or 1.0) + action.volume_delta
-        mixer:call("set-volume", node_id, { volume = math.max(new_volume, 0.0) })
+        mixer:call("set-volume", node_id, {
+            volume = math.min(math.max(new_volume, 0.0), 1.0),
+        })
     elseif action.toggle_mute then
         mixer:call("set-volume", node_id, { mute = not current_volume.mute })
     end
@@ -48,7 +56,8 @@ local function set_default_node_volume(default_nodes, mixer, action)
     quit_after_sync()
 end
 
-local action = actions[config.action]
+-- wpexec passes command-line arguments as Lua varargs, not decoded JSON.
+local action = actions[config]
 if not action then
     Core.quit()
     return
