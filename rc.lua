@@ -31,7 +31,7 @@ local config_path   = gears.filesystem.get_configuration_dir()
 package.path = package.path
     .. ";" .. config_path .. "/plugins/screenlock/lua/?.lua"
     .. ";" .. config_path .. "/plugins/screenlock/lua/?/init.lua"
-local screenlock    = require("awesomewm_screenlock")()
+local screenlock
 
 local my_table      = gears.table
 local dpi           = require("beautiful.xresources").apply_dpi
@@ -205,6 +205,25 @@ lain.layout.cascade.tile.nmaster       = 5
 lain.layout.cascade.tile.ncol          = 2
 
 beautiful.init(string.format("%sthemes/%s/theme.lua", config_path, theme))
+screenlock = require("awesomewm_screenlock")({
+    lockDown = { enabled = true },
+
+		-- NOTE: Implementation reference on the lock down mode disabled to use
+    -- "interactive mode" which displays the wibar at the top, notifications,
+    -- and widgets from the wibar.
+		-- 
+    -- lockDown = { enabled = false },
+		-- wibarWindows = function()
+		-- 	local windows = {}
+		-- 	for s in screen do
+		-- 		if s.mywibar then
+		-- 			table.insert(windows, s.mywibar.window)
+		-- 		end
+		-- 	end
+		-- 	return windows
+		-- end,
+})
+beautiful.screenlock = screenlock
 -- }}}
 
 -- {{{ Menu
